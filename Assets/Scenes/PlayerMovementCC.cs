@@ -12,7 +12,6 @@ public class PlayerMovementCC : MonoBehaviour
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController controller;
-
     private Vector2 moveInput;
     private float verticalVelocity;
 
@@ -27,14 +26,14 @@ public class PlayerMovementCC : MonoBehaviour
         ApplyGravity();
     }
 
-    public void OnMove(InputValue value)
+    public void OnMove(InputAction.CallbackContext context)
     {
-        moveInput = value.Get<Vector2>();
+        moveInput = context.ReadValue<Vector2>();
     }
 
-    public void OnJump(InputValue value)
+    public void OnJump(InputAction.CallbackContext context)
     {
-        if (value.isPressed && controller.isGrounded)
+        if (context.performed && controller.isGrounded)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
@@ -45,7 +44,6 @@ public class PlayerMovementCC : MonoBehaviour
         Vector3 movement =
             transform.right * moveInput.x +
             transform.forward * moveInput.y;
-
         controller.Move(movement * moveSpeed * Time.deltaTime);
     }
 
@@ -55,9 +53,7 @@ public class PlayerMovementCC : MonoBehaviour
         {
             verticalVelocity = -2f;
         }
-
         verticalVelocity += gravity * Time.deltaTime;
-
         controller.Move(
             Vector3.up * verticalVelocity * Time.deltaTime
         );
