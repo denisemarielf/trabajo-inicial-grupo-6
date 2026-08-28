@@ -7,6 +7,7 @@ public class WeaponSwitcher : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip switchSound;
     private Shoot currentWeaponShoot;
+    public AmmoUI ammoUI;
 
 
     void Start()
@@ -49,11 +50,17 @@ public class WeaponSwitcher : MonoBehaviour
         for (int i = 0; i < weapons.Length; i++)
         {
             weapons[i].SetActive(i == index);
-            PlaySwitchSound();
+            
         }
         currentWeaponShoot = (index >= 0 && index < weapons.Length && weapons[index] != null)
             ? weapons[index].GetComponent<Shoot>()
             : null;
+
+        if (ammoUI != null)
+        {
+            ammoUI.SetWeapon(currentWeaponShoot);
+        }
+        PlaySwitchSound();
     }
     public void OnReload(InputAction.CallbackContext context)
     {
