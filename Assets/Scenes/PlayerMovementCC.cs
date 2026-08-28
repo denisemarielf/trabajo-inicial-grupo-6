@@ -12,6 +12,7 @@ public class PlayerMovementCC : MonoBehaviour
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController controller;
+
     private Vector2 moveInput;
     private float verticalVelocity;
 
@@ -44,6 +45,7 @@ public class PlayerMovementCC : MonoBehaviour
         Vector3 movement =
             transform.right * moveInput.x +
             transform.forward * moveInput.y;
+
         controller.Move(movement * moveSpeed * Time.deltaTime);
     }
 
@@ -53,7 +55,9 @@ public class PlayerMovementCC : MonoBehaviour
         {
             verticalVelocity = -2f;
         }
+
         verticalVelocity += gravity * Time.deltaTime;
+
         controller.Move(
             Vector3.up * verticalVelocity * Time.deltaTime
         );
