@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Interact
   - Enemy
+  - bullet
   layers:
   - Default
   - TransparentFX

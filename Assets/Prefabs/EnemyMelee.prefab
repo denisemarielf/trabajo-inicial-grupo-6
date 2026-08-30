@@ -11,9 +11,11 @@ GameObject:
   - component: {fileID: 5605476584309726375}
   - component: {fileID: 2675311060028677672}
   - component: {fileID: 884538771349622360}
-  - component: {fileID: 6427328341519347586}
   - component: {fileID: 246571715296872848}
   - component: {fileID: 7439299911080243968}
+  - component: {fileID: 12823882574065057}
+  - component: {fileID: 2918742578827093023}
+  - component: {fileID: 5139718606306283938}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -94,29 +96,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &6427328341519347586
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4224506864948848856}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 1.03
-  m_Height: 3.19
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!195 &246571715296872848
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -154,6 +133,57 @@ MonoBehaviour:
   navMeshAgent: {fileID: 246571715296872848}
   destination1: {fileID: 0}
   followPlayer: 1
+--- !u!114 &12823882574065057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4224506864948848856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96ec514005209a946b10ad7570105464, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  attackDamage: 10
+  attackRange: 2
+  attackCooldown: 1.5
+--- !u!114 &2918742578827093023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4224506864948848856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32376582b7bd00646b9469e65b4af0b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  maxHealth: 100
+  deathEffect: {fileID: 0}
+  destroyDelay: 3
+--- !u!65 &5139718606306283938
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4224506864948848856}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.79, y: 0.9, z: 1.81}
+  m_Center: {x: 0, y: -0.48, z: 0}
 --- !u!1 &8030454806951356102
 GameObject:
   m_ObjectHideFlags: 0

@@ -148,12 +148,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 55837498}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 271.5, y: 29.21, z: 274.4}
+  m_LocalRotation: {x: -0, y: -0.3420201, z: -0, w: 0.9396927}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 186648719}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &69700706
 PrefabInstance:
@@ -324,7 +324,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Ai
   navMeshAgent: {fileID: 115452120}
   destination1: {fileID: 55837498}
-  followPlayer: 1
+  followPlayer: 0
 --- !u!195 &115452120
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -554,6 +554,29 @@ MonoBehaviour:
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: e9d297b2aa1222747b57bb5a3e76e242, type: 2}
   m_BuildHeightMesh: 0
+--- !u!1 &186648718 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 135512, guid: 663fd3fcb0cd4fe4f8316a05b83dc575, type: 3}
+  m_PrefabInstance: {fileID: 643867064}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &186648719 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 468532, guid: 663fd3fcb0cd4fe4f8316a05b83dc575, type: 3}
+  m_PrefabInstance: {fileID: 643867064}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &186648720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 186648718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b58fe1c496fbde3438a5932a7bad9603, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerHealth
+  maxHealth: 200
 --- !u!1 &282657864
 GameObject:
   m_ObjectHideFlags: 0
@@ -1515,8 +1538,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 468532, guid: 663fd3fcb0cd4fe4f8316a05b83dc575, type: 3}
+      insertIndex: 0
+      addedObject: {fileID: 55837499}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 135512, guid: 663fd3fcb0cd4fe4f8316a05b83dc575, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 186648720}
   m_SourcePrefab: {fileID: 100100000, guid: 663fd3fcb0cd4fe4f8316a05b83dc575, type: 3}
 --- !u!4 &647228759 stripped
 Transform:
@@ -2510,6 +2539,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 12823882574065057, guid: 06b71e2c5d012ee40bfc91038a3c853e, type: 3}
+      propertyPath: attackRange
+      value: 3.5
+      objectReference: {fileID: 0}
     - target: {fileID: 42259269230361851, guid: 06b71e2c5d012ee40bfc91038a3c853e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 292.34
@@ -4410,5 +4443,4 @@ SceneRoots:
   - {fileID: 1978276012}
   - {fileID: 1179180063}
   - {fileID: 1792134497}
-  - {fileID: 55837499}
   - {fileID: 1054747282}
