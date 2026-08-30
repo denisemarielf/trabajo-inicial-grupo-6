@@ -7,7 +7,7 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemyPrefab;      
     public Transform spawnPoint;        
     public int enemiesToSpawn = 20;
-    public float timeBetweenSpawns = 2f;
+    public float timeSpawns = 2f;
 
     void Start()
     {
@@ -19,7 +19,7 @@ public class EnemySpawner : MonoBehaviour
         for (int i = 0; i < enemiesToSpawn; i++)
         {
             Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
-            yield return new WaitForSeconds(timeBetweenSpawns);
+            yield return new WaitForSeconds(timeSpawns);
         }
     }
 }

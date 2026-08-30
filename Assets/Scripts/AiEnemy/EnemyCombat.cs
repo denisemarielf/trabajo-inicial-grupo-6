@@ -14,6 +14,9 @@ public class EnemyCombat : MonoBehaviour
     private NavMeshAgent navMeshAgent;
     private Transform player;
     private EnemyHealth enemyHealth;
+    private Transform currentTarget;
+    private Transform tower;
+    private Collider towerCollider;
 
     void Start()
     {
@@ -21,20 +24,35 @@ public class EnemyCombat : MonoBehaviour
         navMeshAgent = GetComponent<NavMeshAgent>();
         player = FindAnyObjectByType<PlayerMovementCC>().transform;
         enemyHealth = GetComponent<EnemyHealth>();
+        GameObject towerObj = GameObject.FindGameObjectWithTag("Tower");
+        if (towerObj != null)
+            tower = towerObj.transform;
+            towerCollider = towerObj.GetComponent<Collider>(); 
     }
 
     void Update()
     {
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
         if (enemyHealth != null && enemyHealth.IsDead()) return;
         if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh) return;
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
-
-        if (distanceToPlayer <= attackRange)
+        float distanceToTower = Mathf.Infinity;
+        if (towerCollider != null)
         {
-           
-            navMeshAgent.isStopped = true;
+            Vector3 closestPoint = towerCollider.ClosestPoint(transform.position);
+            distanceToTower = Vector3.Distance(transform.position, closestPoint);
+        }
 
+        bool playerInRange = distanceToPlayer <= attackRange;
+        bool towerInRange = distanceToTower <= attackRange;
+
+
+
+        if (playerInRange || towerInRange)
+        {
+            currentTarget = (distanceToPlayer <= distanceToTower) ? player : tower;
+
+            navMeshAgent.isStopped = true;
             if (Time.time >= lastAttackTime + attackCooldown)
             {
                 Attack();
@@ -42,11 +60,12 @@ public class EnemyCombat : MonoBehaviour
         }
         else
         {
+            currentTarget = null;
             navMeshAgent.isStopped = false;
         }
 
 
-        
+
     }
    
 
@@ -59,21 +78,22 @@ public class EnemyCombat : MonoBehaviour
 
     }
 
-    // Este metodo lo llama un Animation Event en el frame exacto
-    // donde el arma/garra "conecta" en la animacion de ataque.
-    /*public void DealDamage()
+    public void DealDamage()
     {
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        Debug.Log("DealDamage() fue llamado. currentTarget = " + (currentTarget != null ? currentTarget.name : "null"));
 
-        if (distanceToPlayer <= attackRange)
+        if (currentTarget == null) return;
+
+        if (currentTarget.CompareTag("Tower"))
         {
-            PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(attackDamage);
-            }
+            Debug.Log("Intentando aplicar daño a la torre...");
+            TowerHealth towerHealth = currentTarget.GetComponent<TowerHealth>();
+            if (towerHealth != null)
+                towerHealth.TakeDamage(attackDamage);
+            else
+                Debug.LogWarning("No se encontró TowerHealth en currentTarget!");
         }
-    }*/
+    }
 
 
     void OnDrawGizmosSelected()

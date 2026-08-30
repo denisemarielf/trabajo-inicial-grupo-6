@@ -7,6 +7,7 @@ TagManager:
   - Interact
   - Enemy
   - bullet
+  - Tower
   layers:
   - Default
   - TransparentFX

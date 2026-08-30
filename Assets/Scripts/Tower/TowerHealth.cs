@@ -5,6 +5,7 @@ public class TowerHealth : MonoBehaviour
     [Header("--------Vida--------")]
     public float maxHealth = 200f;
     private float currentHealth;
+    public AudioClip destroyTowerSound;
 
     private bool isDestroyed = false;
 
@@ -17,7 +18,9 @@ public class TowerHealth : MonoBehaviour
     {
         if (isDestroyed) return;
 
+        Debug.Log($"Torre recibió {amount} de daño. Vida actual: {currentHealth}/{maxHealth}");
         currentHealth -= amount;
+        
 
         if (currentHealth <= 0)
         {
@@ -29,7 +32,9 @@ public class TowerHealth : MonoBehaviour
     {
         isDestroyed = true;
 
-        Debug.Log("La torre fue destruida");
+        AudioSource.PlayClipAtPoint(destroyTowerSound, transform.position);
+        Destroy(gameObject);
+        
     }
 
     public bool IsDestroyed()
@@ -40,5 +45,9 @@ public class TowerHealth : MonoBehaviour
     public float GetHealthPercent()
     {
         return currentHealth / maxHealth;
+    }
+    public float GetCurrentHealth()
+    {
+        return currentHealth;
     }
 }
