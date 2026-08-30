@@ -22,9 +22,27 @@ public class Ai : MonoBehaviour
     void Start()
     {
         animator = GetComponentInChildren<Animator>();
-        navMeshAgent.destination = destination1.transform.position;
         player = FindAnyObjectByType<PlayerMovementCC>().gameObject;
         enemyCombat = GetComponent<EnemyCombat>();
+        SetInitialDestination();
+    }
+
+    private void SetInitialDestination()
+    {
+        if (!navMeshAgent.isOnNavMesh)
+        {
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+            {
+                navMeshAgent.Warp(hit.position);
+            }
+            else
+            {
+                
+                return;
+            }
+        }
+
+        navMeshAgent.destination = destination1.transform.position;
     }
 
     void Update()

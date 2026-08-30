@@ -13,17 +13,22 @@ public class EnemyCombat : MonoBehaviour
     private Animator animator;
     private NavMeshAgent navMeshAgent;
     private Transform player;
+    private EnemyHealth enemyHealth;
 
     void Start()
     {
         animator = GetComponentInChildren<Animator>();
         navMeshAgent = GetComponent<NavMeshAgent>();
         player = FindAnyObjectByType<PlayerMovementCC>().transform;
+        enemyHealth = GetComponent<EnemyHealth>();
     }
 
     void Update()
     {
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        if (enemyHealth != null && enemyHealth.IsDead()) return;
+        if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh) return;
+
 
         if (distanceToPlayer <= attackRange)
         {
@@ -43,13 +48,7 @@ public class EnemyCombat : MonoBehaviour
 
         
     }
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("bullet"))
-        {
-            Destroy(gameObject);
-        }
-    }
+   
 
         void Attack()
     {
