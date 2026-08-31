@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerMovementCC : MonoBehaviour
+public class PlayerMovementCC : NetworkBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
@@ -22,9 +23,23 @@ public class PlayerMovementCC : MonoBehaviour
     }
 
     private void Update()
-    {
+    {   
+        if (!IsOwner)
+            return;
         Move();
         ApplyGravity();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+    Camera playerCamera = GetComponentInChildren<Camera>();
+    AudioListener listener = GetComponentInChildren<AudioListener>();
+
+    if (playerCamera != null)
+        playerCamera.gameObject.SetActive(IsOwner);
+
+    if (listener != null)
+        listener.enabled = IsOwner;
     }
 
     public void OnMove(InputAction.CallbackContext context)

@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 using System.Collections;
 
-public class Shoot : MonoBehaviour
+public class Shoot : NetworkBehaviour
 {
     public Transform spawnPoint;
 
@@ -25,6 +26,7 @@ public class Shoot : MonoBehaviour
 
     public ParticleSystem muzzleFlash;
     public WeaponSway weaponSway;
+
 
     private void Start()
     {
