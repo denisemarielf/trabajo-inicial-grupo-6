@@ -507,6 +507,83 @@ public IEnumerator Disparo_BalaSeMueveEnLaDireccionDelDisparo()
         disparo.Dispose();
     }
 
+
+    [UnityTest]
+    public IEnumerator ArmasConDistintaPotencia_ProducenDistintaVelocidadEnLaBala()
+    {
+    // Arrange
+
+    // Primera arma
+    Shoot arma1 = CrearArmaDePrueba();
+    arma1.shootForce = 500f;
+
+    yield return null;
+
+    // Disparamos con la primera arma
+    InputAction disparo1 =
+        CrearAccionDeDisparo(arma1);
+
+    ClickLeftButton();
+
+    yield return new WaitForFixedUpdate();
+
+    GameObject bala1 =
+        GameObject.Find("Bullet(Clone)");
+
+    Rigidbody rbBala1 =
+        bala1.GetComponent<Rigidbody>();
+
+    float velocidadArma1 =
+        rbBala1.linearVelocity.magnitude;
+
+    // Soltamos el botón
+    SoltarBoton();
+
+    disparo1.performed -= arma1.OnShoot;
+    disparo1.Disable();
+    disparo1.Dispose();
+
+    // Eliminamos la bala anterior
+    Object.DestroyImmediate(bala1);
+
+    // Segunda arma
+    Shoot arma2 = CrearArmaDePrueba();
+    arma2.shootForce = 1000f;
+
+    yield return null;
+
+    InputAction disparo2 =
+        CrearAccionDeDisparo(arma2);
+
+    // Act - Disparamos con la segunda arma
+    ClickLeftButton();
+
+    yield return new WaitForFixedUpdate();
+
+    GameObject bala2 =
+        GameObject.Find("Bullet(Clone)");
+
+    Rigidbody rbBala2 =
+        bala2.GetComponent<Rigidbody>();
+
+    float velocidadArma2 =
+        rbBala2.linearVelocity.magnitude;
+
+    // Assert
+    Assert.Greater(
+        velocidadArma2,
+        velocidadArma1
+    );
+
+    // Soltamos el botón
+    SoltarBoton();
+
+    // Cleanup
+    disparo2.performed -= arma2.OnShoot;
+    disparo2.Disable();
+    disparo2.Dispose();
+}
+
     private void SoltarBoton()
     {
         InputSystem.QueueStateEvent(
