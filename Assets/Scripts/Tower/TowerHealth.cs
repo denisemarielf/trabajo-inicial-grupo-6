@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+
 
 public class TowerHealth : MonoBehaviour
 {
@@ -8,6 +10,7 @@ public class TowerHealth : MonoBehaviour
     public AudioClip destroyTowerSound;
 
     private bool isDestroyed = false;
+    public static event Action OnTowerDestroyed;
 
     void Start()
     {
@@ -34,7 +37,8 @@ public class TowerHealth : MonoBehaviour
 
         AudioSource.PlayClipAtPoint(destroyTowerSound, transform.position);
         Destroy(gameObject);
-        
+        OnTowerDestroyed?.Invoke();
+
     }
 
     public bool IsDestroyed()

@@ -28,7 +28,10 @@ public class Ai : MonoBehaviour
     }
 
     private void SetInitialDestination()
+
     {
+        if (destination1 == null) return; 
+
         if (!navMeshAgent.isOnNavMesh)
         {
             if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5f, NavMesh.AllAreas))
@@ -79,6 +82,7 @@ public class Ai : MonoBehaviour
 
     public void GoToDestination()
     {
+        if (destination1 == null) return;
         navMeshAgent.destination = destination1.transform.position;
     }
 }

@@ -22,4 +22,9 @@ public class EnemySpawner : MonoBehaviour
             yield return new WaitForSeconds(timeSpawns);
         }
     }
+
+    public void setEnemiesToSpawn(int number)
+    {
+        enemiesToSpawn = number;
+    }
 }
