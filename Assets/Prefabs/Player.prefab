@@ -449,6 +449,7 @@ GameObject:
   - component: {fileID: 5739078664074479879}
   - component: {fileID: 4485689380598900013}
   - component: {fileID: 646645506978611025}
+  - component: {fileID: 596259538526166811}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -809,6 +810,25 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &596259538526166811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9083596361001853592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db09257095a76af4f9d3d1cf81f34002, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayersColor
+  ShowTopMostFoldoutHeaderGroup: 1
+  bodyRenderer: {fileID: 2723385307432022726}
+  coloresDisponibles:
+  - {r: 0, g: 0, b: 1, a: 1}
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 0, g: 1, b: 0, a: 1}
+  - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1001 &6009478796554322387
 PrefabInstance:
   m_ObjectHideFlags: 0
