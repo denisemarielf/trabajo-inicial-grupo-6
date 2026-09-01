@@ -9,7 +9,7 @@ public class MainMenuUI : MonoBehaviour
     public Button btnUnirse;
     public Button btnSalir;
     public TMP_InputField inputCodigoPartida;
-    public TMP_Text statusText; 
+    public TMP_Text statusText;
 
     [Header("Referencia a la logica de Relay")]
     public RelayConnectionManager relayManager;
@@ -19,16 +19,23 @@ public class MainMenuUI : MonoBehaviour
         btnCrearPartida.onClick.AddListener(OnCrearPartida);
         btnUnirse.onClick.AddListener(OnUnirse);
         btnSalir.onClick.AddListener(OnSalir);
+        relayManager.OnConnectionAttemptFinished += () => SetButtonsInteractable(true);
+    }
+    void OnDestroy()
+    {
+        relayManager.OnConnectionAttemptFinished -= () => SetButtonsInteractable(true);
     }
 
     private void OnCrearPartida()
     {
+        SetButtonsInteractable(false);
         relayManager.CreateRelay();
     }
 
     private void OnUnirse()
     {
         string codigo = inputCodigoPartida.text.Trim().ToUpper();
+        SetButtonsInteractable(false);
         relayManager.JoinRelay(codigo);
     }
 
@@ -39,5 +46,11 @@ public class MainMenuUI : MonoBehaviour
 #else
         Application.Quit();
 #endif
+    }
+
+    private void SetButtonsInteractable(bool interactable)
+    {
+        btnCrearPartida.interactable = interactable;
+        btnUnirse.interactable = interactable;
     }
 }
