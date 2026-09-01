@@ -12,6 +12,7 @@ using TMPro;
 
 public class RelayConnectionManager : MonoBehaviour
 {
+    public static string CodigoPartidaActual = "";
     public TMP_Text statusText;
     public TMP_Text codigoPartidaText;
     private string joinCodeInput = "";
@@ -30,30 +31,31 @@ public class RelayConnectionManager : MonoBehaviour
     }
 
     public async void CreateRelay()
-{
-    try
     {
-        Allocation allocation = await RelayService.Instance.CreateAllocationAsync(2);
-        string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+        try
+        {
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(2);
+            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
-        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
+            var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+            transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
 
-        if (codigoPartidaText != null) codigoPartidaText.text = "Codigo de partida: " + joinCode;
-        Debug.Log("Codigo de partida: " + joinCode);
+            if (codigoPartidaText != null) codigoPartidaText.text = "Codigo de partida: " + joinCode;
+            CodigoPartidaActual = joinCode; // <-- ESTA es la línea nueva que agregás
+            Debug.Log("Codigo de partida: " + joinCode);
 
-        NetworkManager.Singleton.StartHost();
+            NetworkManager.Singleton.StartHost();
 
-        NetworkManager.Singleton.SceneManager.LoadScene("escenaPrincipal", UnityEngine.SceneManagement.LoadSceneMode.Single);
+            NetworkManager.Singleton.SceneManager.LoadScene("escenaPrincipal", UnityEngine.SceneManagement.LoadSceneMode.Single);
+        }
+        catch (System.Exception e)
+        {
+            if (statusText != null) statusText.text = "Error al crear partida: " + e.Message;
+            Debug.LogError(e);
+        }
     }
-    catch (System.Exception e)
-    {
-        if (statusText != null) statusText.text = "Error al crear partida: " + e.Message;
-        Debug.LogError(e);
-    }
-}
 
- 
+
     public async void JoinRelay(string joinCode)
     {
         try
