@@ -760,6 +760,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: bb71b8ad-144a-4a48-bf41-a0902a30a1ba
     m_ActionName: 'Player/Reload[/Keyboard/r]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 5739078664074479879}
+        m_TargetAssemblyTypeName: PlayerMovementCC, Assembly-CSharp
+        m_MethodName: OnDisconnect
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: c215e708-2d71-4d51-af26-22e08807c30b
+    m_ActionName: 'Player/Disconnect[/Keyboard/escape]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player

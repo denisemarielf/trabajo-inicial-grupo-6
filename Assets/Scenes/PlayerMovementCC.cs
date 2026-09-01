@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Unity.Netcode;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovementCC : NetworkBehaviour
@@ -76,5 +77,21 @@ public class PlayerMovementCC : NetworkBehaviour
         controller.Move(
             Vector3.up * verticalVelocity * Time.deltaTime
         );
+    }
+    public void OnDisconnect(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            Desconectar();
+        }
+    }
+    private void Desconectar()
+    {
+        if (NetworkManager.Singleton == null)
+            return;
+
+        NetworkManager.Singleton.Shutdown();
+
+        SceneManager.LoadScene("menuPrincipal");
     }
 }
