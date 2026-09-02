@@ -1,8 +1,10 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerMovementCC : MonoBehaviour
+public class PlayerMovementCC : NetworkBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
@@ -22,9 +24,23 @@ public class PlayerMovementCC : MonoBehaviour
     }
 
     private void Update()
-    {
+    {   
+        if (!IsOwner)
+            return;
         Move();
         ApplyGravity();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+    Camera playerCamera = GetComponentInChildren<Camera>();
+    AudioListener listener = GetComponentInChildren<AudioListener>();
+
+    if (playerCamera != null)
+        playerCamera.gameObject.SetActive(IsOwner);
+
+    if (listener != null)
+        listener.enabled = IsOwner;
     }
 
     public void OnMove(InputAction.CallbackContext context)
@@ -61,5 +77,21 @@ public class PlayerMovementCC : MonoBehaviour
         controller.Move(
             Vector3.up * verticalVelocity * Time.deltaTime
         );
+    }
+    public void OnDisconnect(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            Desconectar();
+        }
+    }
+    private void Desconectar()
+    {
+        if (NetworkManager.Singleton == null)
+            return;
+
+        NetworkManager.Singleton.Shutdown();
+
+        SceneManager.LoadScene("menuPrincipal");
     }
 }

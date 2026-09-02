@@ -30,7 +30,12 @@ public class Bullet : MonoBehaviour
             Destroy(sparks.gameObject, sparks.main.duration + sparks.main.startLifetime.constantMax);
         }
 
-
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            Destroy(gameObject);
+        }
 
     }
+    
+
 }

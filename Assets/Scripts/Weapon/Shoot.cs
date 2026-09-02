@@ -1,15 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 using System.Collections;
 
-public class Shoot : MonoBehaviour
+public class Shoot : NetworkBehaviour
 {
     public Transform spawnPoint;
 
     public GameObject bullet;
     public float shootForce = 1500f;
     public float shootRate = 0.5f;
-
 
     public int magazineSize = 12;
     public int reserveAmmo = 60;
@@ -29,15 +29,21 @@ public class Shoot : MonoBehaviour
     private void Start()
     {
         audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            Debug.LogWarning(gameObject.name + " no tiene un componente AudioSource asignado.");
+        }
     }
 
     void Awake()
     {
-        currentAmmo = magazineSize; 
+        currentAmmo = magazineSize;
     }
 
     public void OnShoot(InputAction.CallbackContext context)
     {
+        if (!IsOwner) return; // Solo el dueño puede disparar su propia arma
+
         if (context.performed && Time.time >= shootRateTime)
         {
             shootRateTime = Time.time + shootRate;
@@ -50,36 +56,55 @@ public class Shoot : MonoBehaviour
             }
             currentAmmo--;
 
-            GameObject newBullet = Instantiate(
-                bullet,
-                spawnPoint.position,
-                spawnPoint.rotation
-            );
-            audioSource.PlayOneShot(shootSound);
-            muzzleFlash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            muzzleFlash.Play();
-            weaponSway.AddRecoil();
+            // Efectos locales, instantaneos para quien dispara
+            if (audioSource != null && shootSound != null)
+                audioSource.PlayOneShot(shootSound);
 
-            Rigidbody rb = newBullet.GetComponent<Rigidbody>();
-
-            Destroy(newBullet, 3);
-            if (rb != null)
+            if (muzzleFlash != null)
             {
-                rb.AddForce(spawnPoint.forward * shootForce);
+                muzzleFlash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                muzzleFlash.Play();
             }
+
+            if (weaponSway != null)
+                weaponSway.AddRecoil();
+
+            // La bala real la crea el servidor
+            ShootServerRpc(spawnPoint.position, spawnPoint.rotation);
+        }
+    }
+
+    [ServerRpc]
+    private void ShootServerRpc(Vector3 position, Quaternion rotation)
+    {
+        GameObject newBullet = Instantiate(bullet, position, rotation);
+
+        NetworkObject netObj = newBullet.GetComponent<NetworkObject>();
+        if (netObj != null)
+        {
+            netObj.Spawn();
         }
 
+        Rigidbody rb = newBullet.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.AddForce(rotation * Vector3.forward * shootForce);
+        }
 
+        Destroy(newBullet, 3);
     }
+
     public void OnReload(InputAction.CallbackContext context)
     {
+        if (!IsOwner) return;
         if (context.performed) TryReload();
     }
+
     private void TryReload()
     {
         if (isReloading) return;
-        if (currentAmmo >= magazineSize) return; 
-        if (reserveAmmo <= 0) return; 
+        if (currentAmmo >= magazineSize) return;
+        if (reserveAmmo <= 0) return;
 
         StartCoroutine(ReloadRoutine());
     }
@@ -112,7 +137,6 @@ public class Shoot : MonoBehaviour
             audioSource.PlayOneShot(emptySound);
     }
 
-    // UI de munición 
     public int CurrentAmmo => currentAmmo;
     public int ReserveAmmo => reserveAmmo;
     public bool IsReloading => isReloading;
