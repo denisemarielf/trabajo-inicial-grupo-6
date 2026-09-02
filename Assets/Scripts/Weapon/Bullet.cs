@@ -45,5 +45,10 @@ public class Bullet : NetworkBehaviour
                 }
             }
         }
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            Destroy(gameObject);
+        }
+
     }
 }
