@@ -451,6 +451,7 @@ GameObject:
   - component: {fileID: 646645506978611025}
   - component: {fileID: 596259538526166811}
   - component: {fileID: 541327195025154272}
+  - component: {fileID: 2787492892267845586}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -859,6 +860,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraSetup
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2787492892267845586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9083596361001853592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65580827a03a53f4bb5195fe53e12f5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: lMultiplayerAD::WeaponSwitcher
+  ShowTopMostFoldoutHeaderGroup: 1
+  weapons:
+  - {fileID: 401038770144202666, guid: 0ce8ef11a5a7ceb4087dc055d3091b1a, type: 3}
+  - {fileID: 313055253265114103, guid: 84440c656f4be604da283582f6b53a17, type: 3}
+  audioSource: {fileID: 0}
+  switchSound: {fileID: 0}
+  ammoUI: {fileID: 0}
 --- !u!1001 &6009478796554322387
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1272,7 +1292,8 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1915406000973287321, guid: 0ce8ef11a5a7ceb4087dc055d3091b1a, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
