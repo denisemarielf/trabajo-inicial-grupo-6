@@ -10,7 +10,6 @@ public class WeaponSwitcher : NetworkBehaviour
     private Shoot currentWeaponShoot;
     public AmmoUI ammoUI;
 
-    // Se sincroniza sola: cualquiera puede LEERLA, pero solo el dueño puede ESCRIBIRLA
     private NetworkVariable<int> networkWeaponIndex = new NetworkVariable<int>(
         -1,
         NetworkVariableReadPermission.Everyone,
@@ -19,6 +18,13 @@ public class WeaponSwitcher : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        // Aseguramos que TODOS los GameObjects de arma esten activos siempre,
+        // sin importar en que estado haya quedado guardado el prefab.
+        foreach (var weapon in weapons)
+        {
+            if (weapon != null) weapon.SetActive(true);
+        }
+
         networkWeaponIndex.OnValueChanged += OnWeaponIndexChanged;
 
         if (IsOwner)
@@ -28,8 +34,18 @@ public class WeaponSwitcher : NetworkBehaviour
         }
         else
         {
+            // Aplicamos el valor actual, y ademas reforzamos con un frame de gracia
+            // por si el valor todavia no termino de sincronizarse al momento del spawn.
             UpdateWeaponVisuals(networkWeaponIndex.Value);
+            StartCoroutine(ReforzarVisualTrasSpawn());
         }
+    }
+
+    private System.Collections.IEnumerator ReforzarVisualTrasSpawn()
+    {
+        yield return null; // espera un frame
+        yield return null; // y otro mas, para dar margen a la sincronizacion inicial
+        UpdateWeaponVisuals(networkWeaponIndex.Value);
     }
 
     private System.Collections.IEnumerator BuscarAmmoUI()
@@ -55,8 +71,11 @@ public class WeaponSwitcher : NetworkBehaviour
     {
         for (int i = 0; i < weapons.Length; i++)
         {
+            if (weapons[i] == null) continue;
+
             bool isSelected = (i == index);
-            foreach (var renderer in weapons[i].GetComponentsInChildren<Renderer>())
+            // "true" incluye componentes en hijos inactivos, por las dudas
+            foreach (var renderer in weapons[i].GetComponentsInChildren<Renderer>(true))
             {
                 renderer.enabled = isSelected;
             }
@@ -96,7 +115,7 @@ public class WeaponSwitcher : NetworkBehaviour
 
     private void SelectWeapon(int index)
     {
-        UpdateWeaponVisuals(index); // Respuesta visual inmediata para el dueño
+        UpdateWeaponVisuals(index);
 
         currentWeaponShoot = (index >= 0 && index < weapons.Length && weapons[index] != null)
             ? weapons[index].GetComponent<Shoot>()
@@ -110,7 +129,7 @@ public class WeaponSwitcher : NetworkBehaviour
 
         if (IsOwner)
         {
-            networkWeaponIndex.Value = index; // Avisa a TODOS los demas clientes
+            networkWeaponIndex.Value = index;
         }
     }
 

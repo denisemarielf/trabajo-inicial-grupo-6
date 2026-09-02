@@ -1,23 +1,26 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class Bullet : MonoBehaviour
+public class Bullet : NetworkBehaviour
 {
     private Rigidbody rb;
     private bool hasHit = false;
     public ParticleSystem sparksImpact;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
     }
+
     private void OnCollisionEnter(Collision collision)
     {
-        if (hasHit) return; 
+        if (hasHit) return;
         hasHit = true;
 
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-  
         rb.isKinematic = true;
+
         ContactPoint contact = collision.GetContact(0);
         if (sparksImpact != null)
         {
@@ -32,10 +35,15 @@ public class Bullet : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Player"))
         {
-            Destroy(gameObject);
+            // Solo el servidor tiene autoridad para eliminar un objeto de red
+            if (IsServer)
+            {
+                NetworkObject netObj = GetComponent<NetworkObject>();
+                if (netObj != null && netObj.IsSpawned)
+                {
+                    netObj.Despawn(); // Despawn ya destruye el objeto para todos los clientes
+                }
+            }
         }
-
     }
-    
-
 }
