@@ -25,8 +25,17 @@ public class WeaponSwitcher : NetworkBehaviour
             if (weapon != null) weapon.SetActive(true);
         }
 
-        networkWeaponIndex.OnValueChanged += OnWeaponIndexChanged;
+        // NUEVO: asignamos la layer según sea mi arma o la de otro jugador.
+        int targetLayer = IsOwner
+            ? LayerMask.NameToLayer("Weapon")
+            : LayerMask.NameToLayer("Default");
 
+        foreach (var weapon in weapons)
+        {
+            if (weapon != null) SetLayerRecursively(weapon, targetLayer);
+        }
+
+        networkWeaponIndex.OnValueChanged += OnWeaponIndexChanged;
         if (IsOwner)
         {
             StartCoroutine(BuscarAmmoUI());
@@ -34,11 +43,16 @@ public class WeaponSwitcher : NetworkBehaviour
         }
         else
         {
-            // Aplicamos el valor actual, y ademas reforzamos con un frame de gracia
-            // por si el valor todavia no termino de sincronizarse al momento del spawn.
             UpdateWeaponVisuals(networkWeaponIndex.Value);
             StartCoroutine(ReforzarVisualTrasSpawn());
         }
+    }
+
+    private void SetLayerRecursively(GameObject obj, int layer)
+    {
+        obj.layer = layer;
+        foreach (Transform child in obj.transform)
+            SetLayerRecursively(child.gameObject, layer);
     }
 
     private System.Collections.IEnumerator ReforzarVisualTrasSpawn()
