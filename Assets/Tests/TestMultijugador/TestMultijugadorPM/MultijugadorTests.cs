@@ -139,6 +139,125 @@ public class MultijugadorTests
             "El Host no tiene un Player."
         );
     }
+    [UnityTest]
+public IEnumerator SeIniciaPartida_CargaCorrectamenteElMapa()
+{
+    yield return IniciarPartidaComoHost();
 
+    // Esperamos a que se cargue la escena principal
+    yield return new WaitUntil(
+        () => SceneManager.GetActiveScene().name == "escenaPrincipal"
+    );
 
+    // Verificamos que los elementos esenciales del mapa existan
+    Assert.IsNotNull(
+        GameObject.Find("Terrain"),
+        "No se encontró el Terrain en el mapa."
+    );
+
+    Assert.IsNotNull(
+        GameObject.Find("Tower_a"),
+        "No se encontró Tower_a en el mapa."
+    );
+
+    Assert.IsNotNull(
+        GameObject.Find("object"),
+        "No se encontró object en el mapa."
+    );
+
+    Assert.IsNotNull(
+        GameObject.Find("Limites"),
+        "No se encontraron los límites del mapa."
+    );
+}
+
+[UnityTest]
+public IEnumerator SeCreaPartida_SeGeneraCodigoDeUnion()
+{
+    yield return IniciarPartidaComoHost();
+
+    Assert.IsFalse(
+        string.IsNullOrEmpty(RelayConnectionManager.CodigoPartidaActual),
+        "No se generó un código de partida."
+    );
+}
+
+[UnityTest]
+public IEnumerator CodigoInvalido_NoSeConectaComoCliente()
+{
+    bool intentoFinalizado = false;
+
+    System.Action callback = () =>
+    {
+        intentoFinalizado = true;
+    };
+
+    relayManager.OnConnectionAttemptFinished += callback;
+
+    // El formato es válido para Relay, pero el código no corresponde
+    // a ninguna partida existente.
+    string codigoInvalido = "BCDFGH";
+
+    LogAssert.Expect(
+        LogType.Error,
+        new System.Text.RegularExpressions.Regex(
+            ".*RelayServiceException.*"
+        )
+    );
+
+    relayManager.JoinRelay(codigoInvalido);
+
+    yield return new WaitUntil(
+        () => intentoFinalizado
+    );
+
+    Assert.IsFalse(
+        networkManager.IsListening,
+        "El cliente no debería conectarse con un código inexistente."
+    );
+
+    Assert.IsFalse(
+        networkManager.IsClient,
+        "El NetworkManager no debería quedar funcionando como Client."
+    );
+
+    relayManager.OnConnectionAttemptFinished -= callback;
+}
+[UnityTest]
+public IEnumerator CodigoVacio_NoSeConectaComoCliente()
+{
+    bool intentoFinalizado = false;
+
+    System.Action callback = () =>
+    {
+        intentoFinalizado = true;
+    };
+
+    relayManager.OnConnectionAttemptFinished += callback;
+
+    // Esperamos que se produzca un error al intentar
+    // conectarse sin ingresar un código.
+    LogAssert.Expect(
+        LogType.Error,
+        new System.Text.RegularExpressions.Regex(".*")
+    );
+
+    relayManager.JoinRelay("");
+
+    yield return new WaitUntil(
+        () => intentoFinalizado
+    );
+
+    Assert.IsFalse(
+        networkManager.IsListening,
+        "No debería iniciarse una conexión con un código vacío."
+    );
+
+    Assert.IsFalse(
+        networkManager.IsClient,
+        "El NetworkManager no debería funcionar como Client."
+    );
+
+    relayManager.OnConnectionAttemptFinished -= callback;
+}
 }
