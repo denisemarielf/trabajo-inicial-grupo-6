@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
     }
     void Start()
     {
-        setCountEnemies(enemiesSpawnCount);
+       // setCountEnemies(enemiesSpawnCount);
         timeRemaining = matchDuration;
 
         if (winPanel != null) winPanel.SetActive(false);
@@ -80,6 +80,7 @@ public class GameManager : MonoBehaviour
         
     }
 
+    /*
     private void setCountEnemies(int count)
     {
         GameObject[] spawnerObjs = GameObject.FindGameObjectsWithTag("Spawner");
@@ -92,5 +93,6 @@ public class GameManager : MonoBehaviour
                 spawner.setEnemiesToSpawn(count);
             }
         }
-    }
+    }*/
+
 }
