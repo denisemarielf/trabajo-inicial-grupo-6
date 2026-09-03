@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -9,14 +10,21 @@ using Unity.Netcode;
 
 public enum MatchResultReason
 {
-    SurviveTime,       // Victoria: Sobrevivieron el tiempo límite
-    DefeatedAllEnemies,// Victoria: Mataron a todos los enemigos
-    OutOfLives,        // Derrota: Se quedaron sin vidas
-    TowerDestroyed     // Derrota: La torre fue destruida
+    SurviveTime,        // Victoria: Sobrevivieron el tiempo límite
+    DefeatedAllEnemies, // Victoria: Mataron a todos los enemigos
+    OutOfLives,         // Derrota: Se quedaron sin vidas
+    TowerDestroyed      // Derrota: La torre fue destruida
 }
 
 public class GameOverUI : MonoBehaviour
 {
+    public static GameOverUI Instance { get; private set; }
+
+    // Eventos desacoplados para que otros sistemas puedan suscribirse
+    public static event Action OnGameOverShown;
+    public static event Action OnReturnToMenuRequested;
+    public static event Action OnPlayAgainRequested;
+
     [Header("Paneles Principales")]
     [Tooltip("El panel contenedor general de la pantalla de fin de partida")]
     [SerializeField] private GameObject rootPanel;
@@ -27,10 +35,10 @@ public class GameOverUI : MonoBehaviour
 
     [Header("Estilos Visuales")]
     [SerializeField] private string victoryTitle = "¡VICTORIA!";
-    [SerializeField] private Color victoryColor = new Color(0.2f, 0.85f, 0.35f, 1f); // Verde éxito / neón
+    [SerializeField] private Color victoryColor = new Color(0.2f, 0.85f, 0.35f, 1f);
 
     [SerializeField] private string defeatTitle = "DERROTA";
-    [SerializeField] private Color defeatColor = new Color(0.9f, 0.22f, 0.22f, 1f); // Rojo alerta
+    [SerializeField] private Color defeatColor = new Color(0.9f, 0.22f, 0.22f, 1f);
 
     [Header("Mensajes de Victoria")]
     [SerializeField] private string victorySurviveSubtitle = "¡Han sobrevivido el tiempo límite!";
@@ -53,37 +61,67 @@ public class GameOverUI : MonoBehaviour
     [Tooltip("Nombre de la escena del menú principal para volver")]
     [SerializeField] private string mainMenuSceneName = "menuPrincipal";
 
+    private bool isGameOverActive = false;
+
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
         // Aseguramos que arranque oculto por defecto
         if (rootPanel != null)
         {
             rootPanel.SetActive(false);
         }
 
-        // Listener para volver al menú
         if (btnMainMenu != null)
         {
-            btnMainMenu.onClick.AddListener(OnMainMenuClicked);
+            btnMainMenu.onClick.AddListener(HandleMainMenuClick);
         }
 
-        // Listener para jugar de nuevo / revancha
         if (btnPlayAgain != null)
         {
-            btnPlayAgain.onClick.AddListener(OnPlayAgainClicked);
+            btnPlayAgain.onClick.AddListener(HandlePlayAgainClick);
         }
     }
 
     private void OnDestroy()
     {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
         if (btnMainMenu != null)
         {
-            btnMainMenu.onClick.RemoveListener(OnMainMenuClicked);
+            btnMainMenu.onClick.RemoveListener(HandleMainMenuClick);
         }
 
         if (btnPlayAgain != null)
         {
-            btnPlayAgain.onClick.RemoveListener(OnPlayAgainClicked);
+            btnPlayAgain.onClick.RemoveListener(HandlePlayAgainClick);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // Si el GameOver está activo, aseguramos que ningún otro script bloquee el cursor en el centro
+        if (isGameOverActive)
+        {
+            if (Cursor.lockState != CursorLockMode.None)
+            {
+                Cursor.lockState = CursorLockMode.None;
+            }
+
+            if (!Cursor.visible)
+            {
+                Cursor.visible = true;
+            }
         }
     }
 
@@ -135,14 +173,19 @@ public class GameOverUI : MonoBehaviour
 
     private void DisplayUI(bool isVictory, string subtitle)
     {
+        isGameOverActive = true;
+
         if (rootPanel != null)
         {
             rootPanel.SetActive(true);
         }
 
-        // Liberar cursor para permitir navegación en la UI
+        // Liberar cursor
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        // Desactivar temporalmente componentes que capturan mouse si existen en escena
+        DesactivarCamarasJugador();
 
         if (titleText != null)
         {
@@ -153,6 +196,19 @@ public class GameOverUI : MonoBehaviour
         if (subtitleText != null)
         {
             subtitleText.text = subtitle;
+        }
+
+        // Notificar al resto del juego que el GameOver se mostró
+        OnGameOverShown?.Invoke();
+    }
+
+    private void DesactivarCamarasJugador()
+    {
+        // Busca cualquier script de control de cámara FPS y lo pausa para que no interfiera con el mouse
+        var camControllers = FindObjectsByType<CameraControllerFPS>(FindObjectsSortMode.None);
+        foreach (var cam in camControllers)
+        {
+            cam.enabled = false;
         }
     }
 
@@ -175,18 +231,47 @@ public class GameOverUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Oculta el panel.
+    /// Oculta el panel y restaura el estado.
     /// </summary>
     public void Hide()
     {
+        isGameOverActive = false;
+
         if (rootPanel != null)
         {
             rootPanel.SetActive(false);
         }
     }
 
-    private void OnMainMenuClicked()
+    private void HandleMainMenuClick()
     {
+        // Si algún GameManager o sistema central quiere manejar la salida, se lo delegamos
+        if (OnReturnToMenuRequested != null)
+        {
+            OnReturnToMenuRequested.Invoke();
+            return;
+        }
+
+        // Comportamiento por defecto seguro para Producción:
+        CerrarRedYVolverAlMenu();
+    }
+
+    private void HandlePlayAgainClick()
+    {
+        // Si un sistema central maneja el reinicio, se lo delegamos
+        if (OnPlayAgainRequested != null)
+        {
+            OnPlayAgainRequested.Invoke();
+            return;
+        }
+
+        // Comportamiento por defecto seguro para Producción:
+        ReiniciarPartida();
+    }
+
+    private void CerrarRedYVolverAlMenu()
+    {
+        // Cierre limpio de Netcode
         if (Unity.Netcode.NetworkManager.Singleton != null)
         {
             Unity.Netcode.NetworkManager.Singleton.Shutdown();
@@ -195,12 +280,12 @@ public class GameOverUI : MonoBehaviour
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
-    private void OnPlayAgainClicked()
+    private void ReiniciarPartida()
     {
         if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsHost)
         {
             Unity.Netcode.NetworkManager.Singleton.SceneManager.LoadScene(
-                SceneManager.GetActiveScene().name, 
+                SceneManager.GetActiveScene().name,
                 LoadSceneMode.Single
             );
         }
