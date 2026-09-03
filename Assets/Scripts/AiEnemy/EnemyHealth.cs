@@ -34,13 +34,6 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("bullet"))
-        {
-            Die();
-        }
-    }
 
     private void Die()
     {

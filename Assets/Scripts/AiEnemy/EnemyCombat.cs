@@ -12,7 +12,7 @@ public class EnemyCombat : MonoBehaviour
     [Header("--------Referencias--------")]
     private Animator animator;
     private NavMeshAgent navMeshAgent;
-    private Transform player;
+    private Ai ai; // fuente del jugador actual (vivo más cercano)
     private EnemyHealth enemyHealth;
     private Transform currentTarget;
     private Transform tower;
@@ -22,19 +22,28 @@ public class EnemyCombat : MonoBehaviour
     {
         animator = GetComponentInChildren<Animator>();
         navMeshAgent = GetComponent<NavMeshAgent>();
-        player = FindAnyObjectByType<PlayerMovementCC>().transform;
+        ai = GetComponent<Ai>();
         enemyHealth = GetComponent<EnemyHealth>();
+
         GameObject towerObj = GameObject.FindGameObjectWithTag("Tower");
         if (towerObj != null)
+        {
             tower = towerObj.transform;
-            towerCollider = towerObj.GetComponent<Collider>(); 
+            towerCollider = towerObj.GetComponent<Collider>();
+        }
     }
 
     void Update()
     {
         if (enemyHealth != null && enemyHealth.IsDead()) return;
         if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh) return;
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+
+        // El jugador actual lo decide Ai.cs (el vivo más cercano, o null si no hay ninguno).
+        Transform player = ai != null ? ai.CurrentPlayer : null;
+
+        float distanceToPlayer = player != null
+            ? Vector3.Distance(transform.position, player.position)
+            : Mathf.Infinity;
 
         float distanceToTower = Mathf.Infinity;
         if (towerCollider != null)
@@ -46,12 +55,9 @@ public class EnemyCombat : MonoBehaviour
         bool playerInRange = distanceToPlayer <= attackRange;
         bool towerInRange = distanceToTower <= attackRange;
 
-
-
         if (playerInRange || towerInRange)
         {
             currentTarget = (distanceToPlayer <= distanceToTower) ? player : tower;
-
             navMeshAgent.isStopped = true;
             if (Time.time >= lastAttackTime + attackCooldown)
             {
@@ -63,38 +69,32 @@ public class EnemyCombat : MonoBehaviour
             currentTarget = null;
             navMeshAgent.isStopped = false;
         }
-
-
-
     }
-   
 
-        void Attack()
+    void Attack()
     {
         lastAttackTime = Time.time;
-
         if (animator != null)
             animator.SetTrigger("attack");
-
     }
 
     public void DealDamage()
     {
-        Debug.Log("DealDamage() fue llamado. currentTarget = " + (currentTarget != null ? currentTarget.name : "null"));
-
         if (currentTarget == null) return;
 
         if (currentTarget.CompareTag("Tower"))
         {
-            Debug.Log("Intentando aplicar daño a la torre...");
             TowerHealth towerHealth = currentTarget.GetComponent<TowerHealth>();
             if (towerHealth != null)
                 towerHealth.TakeDamage(attackDamage);
-            else
-                Debug.LogWarning("No se encontró TowerHealth en currentTarget!");
+        }
+        else if (currentTarget.CompareTag("Player"))
+        {
+           /* PlayerHealth playerHealth = currentTarget.GetComponent<PlayerHealth>();
+            if (playerHealth != null)
+                playerHealth.TakeDamage(attackDamage);*/
         }
     }
-
 
     void OnDrawGizmosSelected()
     {

@@ -68,7 +68,7 @@ public class GameManager : MonoBehaviour
 
         if (winPanel != null) winPanel.SetActive(true);
 
-        Time.timeScale = 0f; //Pausa
+        
     }
     private void Lose()
     {
@@ -77,7 +77,7 @@ public class GameManager : MonoBehaviour
 
         if (losePanel != null) losePanel.SetActive(true);
 
-        Time.timeScale = 0f;
+        
     }
 
     private void setCountEnemies(int count)
