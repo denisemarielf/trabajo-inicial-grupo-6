@@ -1,0 +1,138 @@
+using UnityEngine;
+using UnityEngine.AI;
+using Unity.Netcode;
+
+public class Ai : NetworkBehaviour
+{
+    public NavMeshAgent navMeshAgent;
+    public GameObject destination1;
+    [Header("--------Follow Header--------")]
+    private Transform player; // el jugador vivo más cercano en este momento (puede ser null)
+    public bool followPlayer;
+    private float distanceToPlayer;
+    private float distanceToFollowPlayer = 20;
+    private Animator animator;
+    [Header("--------Combat Header--------")]
+    private EnemyCombat enemyCombat;
+    private Vector3 lastPlayerPosition;
+    private float repathThreshold = 0.5f;
+    private bool isFollowingPlayer;
+    [Header("--------Player Search--------")]
+    private float playerSearchInterval = 0.5f; // cada cuánto rebusca al jugador más cercano
+    private float playerSearchTimer = 0f;
+    public Transform CurrentPlayer => player;
+
+    // Sincroniza la velocidad para que la animación se vea bien en TODOS los clientes,
+    // no solo en el server (que es el único que realmente mueve el NavMeshAgent).
+    private NetworkVariable<float> networkSpeed = new NetworkVariable<float>(
+        0f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    void Start()
+    {
+        animator = GetComponentInChildren<Animator>();
+        enemyCombat = GetComponent<EnemyCombat>();
+
+        // La IA solo la calcula el server. Los clientes solo reciben el resultado
+        // vía NetworkTransform (posición) y networkSpeed (animación).
+        if (!IsServer) return;
+
+        RefreshNearestPlayer();
+        SetInitialDestination();
+    }
+
+    private void SetInitialDestination()
+    {
+        if (destination1 == null) return;
+        if (!navMeshAgent.isOnNavMesh)
+        {
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+            {
+                navMeshAgent.Warp(hit.position);
+            }
+            else
+            {
+                return;
+            }
+        }
+        navMeshAgent.destination = destination1.transform.position;
+    }
+
+    void Update()
+    {
+        // La animación se actualiza en TODOS los clientes, leyendo el valor sincronizado.
+        animator.SetFloat("speed", networkSpeed.Value);
+
+        // Toda la lógica de decisión (pathfinding, búsqueda de jugador, etc.)
+        // corre únicamente en el server.
+        if (!IsServer) return;
+
+        float speed = navMeshAgent.velocity.magnitude;
+        networkSpeed.Value = speed;
+
+        playerSearchTimer -= Time.deltaTime;
+        if (playerSearchTimer <= 0f)
+        {
+            RefreshNearestPlayer();
+            playerSearchTimer = playerSearchInterval;
+        }
+        if (player == null)
+        {
+            if (isFollowingPlayer)
+            {
+                GoToDestination();
+                isFollowingPlayer = false;
+            }
+            return;
+        }
+        distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        bool isInAttackRange = enemyCombat != null && distanceToPlayer <= enemyCombat.attackRange;
+        bool shouldFollowPlayer = distanceToPlayer < distanceToFollowPlayer && followPlayer && !isInAttackRange;
+        if (shouldFollowPlayer)
+        {
+            FollowPlayer();
+            isFollowingPlayer = true;
+        }
+        else if (isFollowingPlayer)
+        {
+            GoToDestination();
+            isFollowingPlayer = false;
+        }
+    }
+
+    private void RefreshNearestPlayer()
+    {
+        PlayerMovementCC[] allPlayers = FindObjectsByType<PlayerMovementCC>(FindObjectsSortMode.None);
+        Transform nearest = null;
+        float nearestDist = Mathf.Infinity;
+        foreach (var p in allPlayers)
+        {
+            if (p == null) continue;
+            float dist = Vector3.Distance(transform.position, p.transform.position);
+            if (dist < nearestDist)
+            {
+                nearestDist = dist;
+                nearest = p.transform;
+            }
+        }
+        player = nearest;
+    }
+
+    public void FollowPlayer()
+    {
+        if (player == null) return;
+        if (Vector3.Distance(player.position, lastPlayerPosition) > repathThreshold)
+        {
+            navMeshAgent.destination = player.position;
+            lastPlayerPosition = player.position;
+        }
+    }
+
+    public void GoToDestination()
+    {
+        if (destination1 == null) return;
+        navMeshAgent.destination = destination1.transform.position;
+    }
+}

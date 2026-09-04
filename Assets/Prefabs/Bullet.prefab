@@ -13,12 +13,12 @@ GameObject:
   - component: {fileID: 3671909882927031410}
   - component: {fileID: 8476750940869966120}
   - component: {fileID: 371312234930644027}
-  - component: {fileID: 5456103046663498320}
   - component: {fileID: 5708854898620713664}
+  - component: {fileID: 5456103046663498320}
   - component: {fileID: 6136037454295502311}
   m_Layer: 0
   m_Name: Bullet
-  m_TagString: Untagged
+  m_TagString: bullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -146,19 +146,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.011574433, y: 0.013365004, z: 0.024999999}
   m_Center: {x: 0, y: -9.313226e-10, z: -0.0090000015}
---- !u!114 &5456103046663498320
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1421142754292287310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34db4692c37953e468bbf9421e4d208d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Bullet
-  sparksImpact: {fileID: 8360598670902305915}
 --- !u!114 &5708854898620713664
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -186,6 +173,21 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &5456103046663498320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1421142754292287310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34db4692c37953e468bbf9421e4d208d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Bullet
+  ShowTopMostFoldoutHeaderGroup: 1
+  sparksImpact: {fileID: 8360598670902305915}
+  damageAmount: 20
 --- !u!114 &6136037454295502311
 MonoBehaviour:
   m_ObjectHideFlags: 0
