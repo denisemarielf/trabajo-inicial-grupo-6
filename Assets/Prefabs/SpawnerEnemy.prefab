@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   ShowTopMostFoldoutHeaderGroup: 1
-  enemyPrefab: {fileID: 0}
+  enemyPrefab: {fileID: 3544512308622177344, guid: 1661ea78ca3c74246b7352971bdeaa10, type: 3}
   spawnPoint: {fileID: 3987562565758162476}
   enemiesToSpawn: 5
   timeSpawns: 3

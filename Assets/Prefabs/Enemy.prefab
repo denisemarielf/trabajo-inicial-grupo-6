@@ -1018,7 +1018,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Ai
   ShowTopMostFoldoutHeaderGroup: 1
   navMeshAgent: {fileID: 398339243109788569}
-  destination1: {fileID: 0}
+  destination1: {fileID: 9162208549164190252, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
   followPlayer: 1
 --- !u!114 &1478142864409718512
 MonoBehaviour:

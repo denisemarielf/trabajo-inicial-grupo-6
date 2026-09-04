@@ -1,45 +1,74 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
-
-public class TowerHealth : MonoBehaviour
+public class TowerHealth : NetworkBehaviour
 {
     [Header("--------Vida--------")]
     public float maxHealth = 200f;
-    private float currentHealth;
-    public AudioClip destroyTowerSound;
+
+    // Se sincroniza sola: cualquiera puede LEERLA, pero solo el servidor puede ESCRIBIRLA.
+    private NetworkVariable<float> currentHealth = new NetworkVariable<float>(
+        0f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     private bool isDestroyed = false;
+
+    [Header("--------Audio--------")]
+    private AudioSource audioSource;
+    public AudioClip destroyTowerSound;
+
+    // El GameManager (u otros scripts) se suscriben a esto
     public static event Action OnTowerDestroyed;
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
-        currentHealth = maxHealth;
+        audioSource = GetComponent<AudioSource>();
+
+        if (IsServer)
+        {
+            currentHealth.Value = maxHealth;
+        }
     }
 
+    
     public void TakeDamage(float amount)
     {
+        if (!IsServer) return; // autoridad exclusiva del servidor
         if (isDestroyed) return;
 
-        Debug.Log($"Torre recibió {amount} de daño. Vida actual: {currentHealth}/{maxHealth}");
-        currentHealth -= amount;
-        
+        currentHealth.Value -= amount;
+        Debug.Log($"Torre recibió {amount} de daño. Vida actual: {currentHealth.Value}/{maxHealth}");
 
-        if (currentHealth <= 0)
+        if (currentHealth.Value <= 0)
         {
             DestroyTower();
         }
     }
-
     private void DestroyTower()
     {
         isDestroyed = true;
-
-        AudioSource.PlayClipAtPoint(destroyTowerSound, transform.position);
-        Destroy(gameObject);
-        OnTowerDestroyed?.Invoke();
-
+        Debug.Log("La torre fue destruida");
+        PlayDestroySoundClientRpc();
+        NotifyTowerDestroyedClientRpc();
     }
+
+    [ClientRpc]
+    private void PlayDestroySoundClientRpc()
+    {
+        if (destroyTowerSound != null)
+            AudioSource.PlayClipAtPoint(destroyTowerSound, transform.position);
+    }
+
+    [ClientRpc]
+    private void NotifyTowerDestroyedClientRpc()
+    {
+        OnTowerDestroyed?.Invoke();
+    }
+
+
 
     public bool IsDestroyed()
     {
@@ -48,10 +77,11 @@ public class TowerHealth : MonoBehaviour
 
     public float GetHealthPercent()
     {
-        return currentHealth / maxHealth;
+        return currentHealth.Value / maxHealth;
     }
+
     public float GetCurrentHealth()
     {
-        return currentHealth;
+        return currentHealth.Value;
     }
 }

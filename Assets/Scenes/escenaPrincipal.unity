@@ -2935,6 +2935,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1267110267}
+  - component: {fileID: 1267110268}
   - component: {fileID: 1267110266}
   m_Layer: 0
   m_Name: GameManager
@@ -2955,6 +2956,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5f03706adc803e4db5c9d899d5faa43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  ShowTopMostFoldoutHeaderGroup: 1
   matchDuration: 120
   timerText: {fileID: 1736296376}
   winPanel: {fileID: 1214786760}
@@ -2975,6 +2977,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1267110268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1267110265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2701367971
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1001 &1268469592
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4127,7 +4156,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2433355402244451021, guid: a081e5eb425a8494e9f37c906861489e, type: 3}
       propertyPath: m_InScenePlacedDisabledByDefault
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2433355402244451021, guid: a081e5eb425a8494e9f37c906861489e, type: 3}
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
@@ -4275,6 +4304,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 352197158639724627, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 352197158639724627, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2069066396
+      objectReference: {fileID: 0}
+    - target: {fileID: 352197158639724627, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 352197158639724627, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 1890073485
+      objectReference: {fileID: 0}
     - target: {fileID: 1546361729985075216, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
       propertyPath: m_LocalPosition.x
       value: 271.5
