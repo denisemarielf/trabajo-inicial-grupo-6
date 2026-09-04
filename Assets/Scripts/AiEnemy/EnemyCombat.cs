@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using Unity.Netcode;
+using Unity.Netcode.Components; // para NetworkAnimator
 
 public class EnemyCombat : NetworkBehaviour
 {
@@ -17,10 +18,14 @@ public class EnemyCombat : NetworkBehaviour
     private Transform currentTarget;
     private Transform tower;
     private Collider towerCollider;
+    private NetworkAnimator networkAnimator;
 
     void Start()
     {
         animator = GetComponentInChildren<Animator>();
+        networkAnimator = GetComponentInChildren<NetworkAnimator>();
+        if (networkAnimator == null)
+            networkAnimator = GetComponent<NetworkAnimator>();
         navMeshAgent = GetComponent<NavMeshAgent>();
         ai = GetComponent<Ai>();
         enemyHealth = GetComponent<EnemyHealth>();
@@ -78,8 +83,11 @@ public class EnemyCombat : NetworkBehaviour
     void Attack()
     {
         lastAttackTime = Time.time;
+        if (networkAnimator != null)
+            networkAnimator.SetTrigger("attack");
         if (animator != null)
             animator.SetTrigger("attack"); // NetworkAnimator lo replica a todos los clientes
+
     }
 
     // Llamado desde un Animation Event dentro del clip de ataque.
