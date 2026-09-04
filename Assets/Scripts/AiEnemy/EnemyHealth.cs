@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Netcode.Components; // para NetworkAnimator
 
 public class EnemyHealth : NetworkBehaviour
 {
@@ -15,6 +16,7 @@ public class EnemyHealth : NetworkBehaviour
 
     [Header("--------Referencias--------")]
     private Animator animator;
+    private NetworkAnimator networkAnimator;
     public GameObject deathEffect;
     public float destroyDelay = 3f;
 
@@ -31,6 +33,9 @@ public class EnemyHealth : NetworkBehaviour
             currentHealth.Value = maxHealth;
         }
         animator = GetComponentInChildren<Animator>();
+        networkAnimator = GetComponentInChildren<NetworkAnimator>();
+        if (networkAnimator == null)
+            networkAnimator = GetComponent<NetworkAnimator>();
     }
 
     // Llamar solo desde código que ya corre en el server (por ejemplo
@@ -44,6 +49,8 @@ public class EnemyHealth : NetworkBehaviour
 
         currentHealth.Value -= amount;
 
+        if (networkAnimator != null)
+            networkAnimator.SetTrigger("hit");
         if (animator != null)
             animator.SetTrigger("hit"); // NetworkAnimator lo replica a los clientes
 
@@ -58,6 +65,8 @@ public class EnemyHealth : NetworkBehaviour
         if (!IsServer) return;
         isDeadNet.Value = true;
 
+        if (networkAnimator != null)
+            networkAnimator.SetTrigger("die");
         if (animator != null)
             animator.SetTrigger("die");
 
