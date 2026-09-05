@@ -33,31 +33,55 @@ public class DisconnectManger : MonoBehaviour
         Debug.Log("Cliente desconectado: " + clientId);
 
         if (NetworkManager.Singleton == null)
+        {
+            Debug.LogError("NetworkManager es NULL");
             return;
+        }
 
-        Debug.Log("Mi ClientId: " + NetworkManager.Singleton.LocalClientId);
+        Debug.Log(
+            "ESTADO NETCODE - IsHost: " +
+            NetworkManager.Singleton.IsHost +
+            " | IsClient: " +
+            NetworkManager.Singleton.IsClient +
+            " | IsListening: " +
+            NetworkManager.Singleton.IsListening
+        );
 
-        // Si YO soy el que se está desconectando, no hago nada
-        if (clientId == NetworkManager.Singleton.LocalClientId)
-            return;
-
-        // Si soy cliente y se desconectó el Host
+        // Si soy cliente, significa que perdÃ­ la conexiÃ³n con el Host.
         if (!NetworkManager.Singleton.IsHost)
         {
-            Debug.Log("El Host se desconectó. Volviendo al menú.");
+            Debug.Log("EL HOST SE DESCONECTÃ“");
 
-            NetworkManager.Singleton.Shutdown();
-
-            SceneManager.LoadScene("menuPrincipal");
+            StartCoroutine(VolverAlMenu());
 
             return;
         }
 
-        // Si soy el Host y se desconectó el otro jugador
+        // Si soy el Host, significa que se desconectÃ³ otro jugador.
         if (disconnectText != null)
         {
             disconnectText.gameObject.SetActive(true);
             disconnectText.text = "El otro jugador se ha desconectado.";
         }
+    }
+
+    private System.Collections.IEnumerator VolverAlMenu()
+    {
+        Debug.Log("VOLVER AL MENU - INICIANDO");
+
+        yield return null;
+
+        if (NetworkManager.Singleton != null)
+        {
+            Debug.Log("VOLVER AL MENU - HACIENDO SHUTDOWN");
+
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        yield return new WaitForSeconds(0.2f);
+
+        Debug.Log("VOLVER AL MENU - CARGANDO ESCENA");
+
+        SceneManager.LoadScene("menuPrincipal");
     }
 }
