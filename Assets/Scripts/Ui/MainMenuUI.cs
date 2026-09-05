@@ -11,32 +11,28 @@ public class MainMenuUI : MonoBehaviour
     public TMP_InputField inputCodigoPartida;
     public TMP_Text statusText;
 
-    [Header("Referencia a la logica de Relay")]
-    public RelayConnectionManager relayManager;
+    [Header("Referencia a Lobby")]
+    public LobbyManager lobbyManager;
 
     void Start()
     {
         btnCrearPartida.onClick.AddListener(OnCrearPartida);
         btnUnirse.onClick.AddListener(OnUnirse);
         btnSalir.onClick.AddListener(OnSalir);
-        relayManager.OnConnectionAttemptFinished += () => SetButtonsInteractable(true);
-    }
-    void OnDestroy()
-    {
-        relayManager.OnConnectionAttemptFinished -= () => SetButtonsInteractable(true);
     }
 
     private void OnCrearPartida()
     {
         SetButtonsInteractable(false);
-        relayManager.CreateRelay();
+        lobbyManager.CrearLobby();
     }
 
     private void OnUnirse()
     {
         string codigo = inputCodigoPartida.text.Trim().ToUpper();
+
         SetButtonsInteractable(false);
-        relayManager.JoinRelay(codigo);
+        lobbyManager.UnirseLobby(codigo);
     }
 
     private void OnSalir()

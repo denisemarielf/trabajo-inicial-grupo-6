@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8945994703482206210}
   - component: {fileID: 7832699302961554215}
   - component: {fileID: 7013208798223668413}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: PistolaGlock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -166,7 +166,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4144350782397603096}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: SpawnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -198,7 +198,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5250160529842568938}
   - component: {fileID: 7220109398095986149}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: WeaponModel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -253,7 +253,7 @@ GameObject:
   - component: {fileID: 7862452171214046392}
   - component: {fileID: 4772640730321596312}
   - component: {fileID: 3327546395890860840}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Pistol_B_BarrelGuard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -343,7 +343,7 @@ GameObject:
   - component: {fileID: 2740499781548471497}
   - component: {fileID: 6957078883781985727}
   - component: {fileID: 1255806137697646303}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Pistol_B_Receiver
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -433,7 +433,7 @@ GameObject:
   - component: {fileID: 5254123267257987678}
   - component: {fileID: 2602175033237873941}
   - component: {fileID: 8670322601137513761}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Pistol_B_Barrel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -523,7 +523,7 @@ GameObject:
   - component: {fileID: 6544873788662298105}
   - component: {fileID: 2336910577935510488}
   - component: {fileID: 9159458761638238673}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Pistol_B_Mag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -613,7 +613,7 @@ GameObject:
   - component: {fileID: 5035435668747009954}
   - component: {fileID: 1842383902718662784}
   - component: {fileID: 2553217936550650831}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Pistol_B_Trigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -754,7 +754,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3515071930650600478, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5709827444404199806, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Enabled
@@ -766,19 +766,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6980259576133684760, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7222628775867560472, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8678474555929038593, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8739346576828255726, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
