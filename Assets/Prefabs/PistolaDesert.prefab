@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8816330507032945015}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: WeaponModel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49,7 +49,7 @@ GameObject:
   - component: {fileID: 32960028428023749}
   - component: {fileID: 7471499718508588594}
   - component: {fileID: 3258588210278714827}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: PistolaDesert
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -206,7 +206,7 @@ GameObject:
   - component: {fileID: 8683039374027466518}
   - component: {fileID: 8108354041991338723}
   - component: {fileID: 7734774821170868563}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pistol_D_Receiver_Part
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -296,7 +296,7 @@ GameObject:
   - component: {fileID: 6111955966788525752}
   - component: {fileID: 4645365108835384914}
   - component: {fileID: 615329350049611519}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pistol_D_Bolt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -386,7 +386,7 @@ GameObject:
   - component: {fileID: 3189614197887492683}
   - component: {fileID: 1849455415392667611}
   - component: {fileID: 8385540157547084450}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pistol_D_Receiver
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -474,7 +474,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5900595722938938425}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: SpawnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -507,7 +507,7 @@ GameObject:
   - component: {fileID: 5462923446565707693}
   - component: {fileID: 6695808594869307008}
   - component: {fileID: 2861007921828719143}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pistol_D_Mag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -597,7 +597,7 @@ GameObject:
   - component: {fileID: 6759348136542529874}
   - component: {fileID: 4739963816039857238}
   - component: {fileID: 187957530440835352}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pistol_D_Trigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -687,7 +687,7 @@ GameObject:
   - component: {fileID: 2360347201389741808}
   - component: {fileID: 9197675271073104962}
   - component: {fileID: 6251915343814444047}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pistol_D_Barrel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -844,7 +844,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3515071930650600478, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6725371519831039651, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: playOnAwake
@@ -856,11 +856,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6980259576133684760, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 7222628775867560472, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 7520814639884122992, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: playOnAwake
@@ -876,11 +876,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8678474555929038593, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 8739346576828255726, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 9210749833301326609, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
       propertyPath: m_Enabled

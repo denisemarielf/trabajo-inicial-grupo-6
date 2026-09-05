@@ -30,7 +30,7 @@ public class PlayerMovementCC : NetworkBehaviour
         ApplyGravity();
     }
 
-    // OnNetworkSpawn eliminado de acá — esa responsabilidad ya la tiene PlayerCameraSetup.
+    // OnNetworkSpawn eliminado de acï¿½ ï¿½ esa responsabilidad ya la tiene PlayerCameraSetup.
 
     public void OnMove(InputAction.CallbackContext context)
     {
@@ -72,13 +72,22 @@ public class PlayerMovementCC : NetworkBehaviour
             Desconectar();
         }
     }
+private void Desconectar()
+{
+    if (NetworkManager.Singleton == null)
+        return;
 
-    private void Desconectar()
-    {
-        if (NetworkManager.Singleton == null)
-            return;
+    NetworkManager.Singleton.StartCoroutine(
+        DesconectarYVolverAlMenu()
+    );
+}
 
-        NetworkManager.Singleton.Shutdown();
-        SceneManager.LoadScene("menuPrincipal");
-    }
+private System.Collections.IEnumerator DesconectarYVolverAlMenu()
+{
+    NetworkManager.Singleton.Shutdown();
+
+    yield return new WaitForSeconds(0.2f);
+
+    SceneManager.LoadScene("menuPrincipal");
+}
 }
