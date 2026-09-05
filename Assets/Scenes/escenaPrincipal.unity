@@ -3274,8 +3274,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1267110267}
   - component: {fileID: 1267110268}
-  - component: {fileID: 1267110266}
-  - component: {fileID: 1267110268}
+  - component: {fileID: 1267110269}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -3283,24 +3282,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1267110266
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1267110265}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5f03706adc803e4db5c9d899d5faa43, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  ShowTopMostFoldoutHeaderGroup: 1
-  matchDuration: 120
-  timerText: {fileID: 1736296376}
-  winPanel: {fileID: 1214786760}
-  losePanel: {fileID: 1716949818}
-  enemiesSpawnCount: 20
 --- !u!4 &1267110267
 Transform:
   m_ObjectHideFlags: 0
@@ -3343,6 +3324,24 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &1267110269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1267110265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5f03706adc803e4db5c9d899d5faa43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: lMultiplayerAD::GameManager
+  ShowTopMostFoldoutHeaderGroup: 1
+  matchDuration: 120
+  timerText: {fileID: 1736296376}
+  winPanel: {fileID: 1214786760}
+  losePanel: {fileID: 1716949818}
+  enemiesSpawnCount: 20
 --- !u!1001 &1268469592
 PrefabInstance:
   m_ObjectHideFlags: 0
