@@ -34,9 +34,9 @@ public class GameManager : NetworkBehaviour
         {
             networkTimeRemaining.Value = matchDuration;
             TowerHealth.OnTowerDestroyed += HandleTowerDestroyed;
+            PlayerHealth.OnPlayerDied += HandlePlayerDied;
         }
 
-        
         networkMatchState.OnValueChanged += OnMatchStateChanged;
         networkTimeRemaining.OnValueChanged += (oldVal, newVal) => UpdateTimerUI(newVal);
 
@@ -48,13 +48,15 @@ public class GameManager : NetworkBehaviour
         if (IsServer)
         {
             TowerHealth.OnTowerDestroyed -= HandleTowerDestroyed;
+            PlayerHealth.OnPlayerDied -= HandlePlayerDied;
         }
+
         networkMatchState.OnValueChanged -= OnMatchStateChanged;
     }
 
     void Update()
     {
-       
+        // Solo el servidor descuenta el tiempo
         if (!IsServer) return;
         if (networkMatchState.Value != 0) return;
 
@@ -77,8 +79,15 @@ public class GameManager : NetworkBehaviour
 
     private void HandleTowerDestroyed()
     {
-       
         if (networkMatchState.Value != 0) return;
+        Debug.Log("DERROTA. La torre fue destruida.");
+        Lose();
+    }
+
+    private void HandlePlayerDied()
+    {
+        if (networkMatchState.Value != 0) return;
+        Debug.Log("DERROTA. El jugador ha muerto.");
         Lose();
     }
 
@@ -89,31 +98,12 @@ public class GameManager : NetworkBehaviour
 
     private void Lose()
     {
-        Debug.Log("DERROTA. La torre fue destruida.");
         networkMatchState.Value = 2;
     }
 
-   
     private void OnMatchStateChanged(int oldState, int newState)
     {
         if (newState == 1 && winPanel != null) winPanel.SetActive(true);
         if (newState == 2 && losePanel != null) losePanel.SetActive(true);
     }
-
-
-    /*
-    private void setCountEnemies(int count)
-    {
-        GameObject[] spawnerObjs = GameObject.FindGameObjectsWithTag("Spawner");
-
-        foreach (GameObject obj in spawnerObjs)
-        {
-            EnemySpawner spawner = obj.GetComponent<EnemySpawner>();
-            if (spawner != null)
-            {
-                spawner.setEnemiesToSpawn(count);
-            }
-        }
-    }*/
-
 }
