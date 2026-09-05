@@ -108,13 +108,13 @@ public class EnemyCombat : NetworkBehaviour
         }
         else if (currentTarget.CompareTag("Player"))
         {
-            /* PlayerHealth playerHealth = currentTarget.GetComponent<PlayerHealth>();
+            PlayerHealth playerHealth = currentTarget.GetComponent<PlayerHealth>();
             if (playerHealth != null)
-                playerHealth.TakeDamage(attackDamage);*/
+                playerHealth.TakeDamage(attackDamage);
         }
     }
 
-    void OnDrawGizmosSelected()
+        void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);

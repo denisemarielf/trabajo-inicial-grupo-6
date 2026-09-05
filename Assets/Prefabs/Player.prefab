@@ -484,6 +484,8 @@ GameObject:
   - component: {fileID: 646645506978611025}
   - component: {fileID: 596259538526166811}
   - component: {fileID: 541327195025154272}
+  - component: {fileID: -623738128733140602}
+
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -893,6 +895,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraSetup
   ShowTopMostFoldoutHeaderGroup: 1
+
+--- !u!114 &-623738128733140602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9083596361001853592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b0d4c7c1c8b4b64b831da2b55ffbed7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: lMultiplayerAD::PlayerHealth
+  ShowTopMostFoldoutHeaderGroup: 1
+  maxHealth: 30
+
 --- !u!1001 &6009478796554322387
 PrefabInstance:
   m_ObjectHideFlags: 0
