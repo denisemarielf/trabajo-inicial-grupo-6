@@ -3273,6 +3273,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1267110267}
+  - component: {fileID: 1267110268}
   - component: {fileID: 1267110266}
   - component: {fileID: 1267110268}
   m_Layer: 0
@@ -4625,7 +4626,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2433355402244451021, guid: a081e5eb425a8494e9f37c906861489e, type: 3}
       propertyPath: m_InScenePlacedDisabledByDefault
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2433355402244451021, guid: a081e5eb425a8494e9f37c906861489e, type: 3}
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
@@ -4773,6 +4774,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 352197158639724627, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 352197158639724627, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2069066396
+      objectReference: {fileID: 0}
+    - target: {fileID: 352197158639724627, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 352197158639724627, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 1890073485
+      objectReference: {fileID: 0}
     - target: {fileID: 1546361729985075216, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
       propertyPath: m_LocalPosition.x
       value: 271.5

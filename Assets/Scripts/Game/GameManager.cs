@@ -5,9 +5,19 @@ using UnityEngine;
 public class GameManager : NetworkBehaviour
 {
     [Header("--------Cronometro--------")]
-    public float matchDuration = 120f;
-    private float timeRemaining;
-    private bool matchEnded = false;
+    public float matchDuration = 120f; // 2 minutos
+
+    private NetworkVariable<float> networkTimeRemaining = new NetworkVariable<float>(
+        0f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    private NetworkVariable<int> networkMatchState = new NetworkVariable<int>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     [Header("--------UI--------")]
     [SerializeField] private TMP_Text timerText;
@@ -15,73 +25,85 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject losePanel;
     [SerializeField] private int enemiesSpawnCount;
 
-    void OnEnable()
+    public override void OnNetworkSpawn()
     {
-        TowerHealth.OnTowerDestroyed += HandleTowerDestroyed;
-        PlayerHealth.OnPlayerDied += HandlePlayerDied;
-    }
-    void OnDisable()
-    {
-        TowerHealth.OnTowerDestroyed -= HandleTowerDestroyed;
-        PlayerHealth.OnPlayerDied -= HandlePlayerDied;
-    }
-
-    void Start()
-    {
-        timeRemaining = matchDuration;
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
-        UpdateTimerUI();
+
+        if (IsServer)
+        {
+            networkTimeRemaining.Value = matchDuration;
+            TowerHealth.OnTowerDestroyed += HandleTowerDestroyed;
+            PlayerHealth.OnPlayerDied += HandlePlayerDied;
+        }
+
+        networkMatchState.OnValueChanged += OnMatchStateChanged;
+        networkTimeRemaining.OnValueChanged += (oldVal, newVal) => UpdateTimerUI(newVal);
+
+        UpdateTimerUI(networkTimeRemaining.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsServer)
+        {
+            TowerHealth.OnTowerDestroyed -= HandleTowerDestroyed;
+            PlayerHealth.OnPlayerDied -= HandlePlayerDied;
+        }
+
+        networkMatchState.OnValueChanged -= OnMatchStateChanged;
     }
 
     void Update()
     {
-        if (matchEnded) return;
-        timeRemaining -= Time.deltaTime;
-        if (timeRemaining <= 0)
+        // Solo el servidor descuenta el tiempo
+        if (!IsServer) return;
+        if (networkMatchState.Value != 0) return;
+
+        networkTimeRemaining.Value -= Time.deltaTime;
+
+        if (networkTimeRemaining.Value <= 0)
         {
-            timeRemaining = 0;
+            networkTimeRemaining.Value = 0;
             Win();
         }
-        UpdateTimerUI();
     }
 
-    private void UpdateTimerUI()
+    private void UpdateTimerUI(float time)
     {
         if (timerText == null) return;
-        int minutes = Mathf.FloorToInt(timeRemaining / 60f);
-        int seconds = Mathf.FloorToInt(timeRemaining % 60f);
+        int minutes = Mathf.FloorToInt(time / 60f);
+        int seconds = Mathf.FloorToInt(time % 60f);
         timerText.text = $"{minutes:00}:{seconds:00}";
     }
 
     private void HandleTowerDestroyed()
     {
-        if (matchEnded) return;
-        LoseClientRpc();
+        if (networkMatchState.Value != 0) return;
+        Debug.Log("DERROTA. La torre fue destruida.");
+        Lose();
     }
 
     private void HandlePlayerDied()
     {
-        if (matchEnded) return;
-        LoseClientRpc();
-    }
-
-    [ClientRpc]
-    private void LoseClientRpc()
-    {
+        if (networkMatchState.Value != 0) return;
+        Debug.Log("DERROTA. El jugador ha muerto.");
         Lose();
     }
 
     private void Win()
     {
-        matchEnded = true;
-        if (winPanel != null) winPanel.SetActive(true);
+        networkMatchState.Value = 1;
     }
 
     private void Lose()
     {
-        matchEnded = true;
-        Debug.Log("DERROTA.");
-        if (losePanel != null) losePanel.SetActive(true);
+        networkMatchState.Value = 2;
+    }
+
+    private void OnMatchStateChanged(int oldState, int newState)
+    {
+        if (newState == 1 && winPanel != null) winPanel.SetActive(true);
+        if (newState == 2 && losePanel != null) losePanel.SetActive(true);
     }
 }
