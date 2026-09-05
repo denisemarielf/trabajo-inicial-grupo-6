@@ -8,13 +8,11 @@ public class PlayerMovementCC : NetworkBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
-
     [Header("Jump")]
     [SerializeField] private float jumpHeight = 1.5f;
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController controller;
-
     private Vector2 moveInput;
     private float verticalVelocity;
 
@@ -24,24 +22,15 @@ public class PlayerMovementCC : NetworkBehaviour
     }
 
     private void Update()
-    {   
+    {
         if (!IsOwner)
             return;
+
         Move();
         ApplyGravity();
     }
 
-    public override void OnNetworkSpawn()
-    {
-    Camera playerCamera = GetComponentInChildren<Camera>();
-    AudioListener listener = GetComponentInChildren<AudioListener>();
-
-    if (playerCamera != null)
-        playerCamera.gameObject.SetActive(IsOwner);
-
-    if (listener != null)
-        listener.enabled = IsOwner;
-    }
+    // OnNetworkSpawn eliminado de ac� � esa responsabilidad ya la tiene PlayerCameraSetup.
 
     public void OnMove(InputAction.CallbackContext context)
     {
@@ -61,7 +50,6 @@ public class PlayerMovementCC : NetworkBehaviour
         Vector3 movement =
             transform.right * moveInput.x +
             transform.forward * moveInput.y;
-
         controller.Move(movement * moveSpeed * Time.deltaTime);
     }
 
@@ -71,13 +59,12 @@ public class PlayerMovementCC : NetworkBehaviour
         {
             verticalVelocity = -2f;
         }
-
         verticalVelocity += gravity * Time.deltaTime;
-
         controller.Move(
             Vector3.up * verticalVelocity * Time.deltaTime
         );
     }
+
     public void OnDisconnect(InputAction.CallbackContext context)
     {
         if (context.performed)
