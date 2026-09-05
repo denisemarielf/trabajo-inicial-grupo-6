@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport.Relay;
@@ -7,53 +8,71 @@ using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using TMPro;
 
 public class RelayConnectionManager : MonoBehaviour
 {
     public static string CodigoPartidaActual = "";
+
     public TMP_Text statusText;
     public TMP_Text codigoPartidaText;
-    private string joinCodeInput = "";
-    private string statusMessage = "";
 
-    private bool isConnecting = false; // <-- nuevo
+    private bool isConnecting = false;
+
     public event Action OnConnectionAttemptFinished;
 
-    private async void Start()
-    {
-        await UnityServices.InitializeAsync();
-        AuthenticationService.Instance.SignedIn += () =>
-        {
-            Debug.Log("Signed in: " + AuthenticationService.Instance.PlayerId);
-        };
-        await AuthenticationService.Instance.SignInAnonymouslyAsync();
-    }
+private void Start()
+{
+    Debug.Log("RelayConnectionManager listo.");
+}
 
-    public async void CreateRelay()
+    public async Task<string> CreateRelay()
     {
-        if (isConnecting || NetworkManager.Singleton.IsListening) return; // <-- guarda
+        if (isConnecting || NetworkManager.Singleton.IsListening)
+            return "";
+
         isConnecting = true;
 
         try
         {
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(2);
-            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-            transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
+            Allocation allocation =
+                await RelayService.Instance.CreateAllocationAsync(2);
 
-            if (codigoPartidaText != null) codigoPartidaText.text = "Codigo de partida: " + joinCode;
+            string joinCode =
+                await RelayService.Instance.GetJoinCodeAsync(
+                    allocation.AllocationId
+                );
+
+            var transport =
+                NetworkManager.Singleton.GetComponent<UnityTransport>();
+
+            transport.SetRelayServerData(
+                AllocationUtils.ToRelayServerData(allocation, "dtls")
+            );
+
             CodigoPartidaActual = joinCode;
-            Debug.Log("Codigo de partida: " + joinCode);
 
-            NetworkManager.Singleton.StartHost();
-            NetworkManager.Singleton.SceneManager.LoadScene("escenaPrincipal", LoadSceneMode.Single);
+            if (codigoPartidaText != null)
+            {
+                codigoPartidaText.text =
+                    "Codigo de partida: " + joinCode;
+            }
+
+            Debug.Log("Código Relay creado: " + joinCode);
+
+            return joinCode;
         }
         catch (System.Exception e)
         {
-            if (statusText != null) statusText.text = "Error al crear partida: " + e.Message;
+            if (statusText != null)
+            {
+                statusText.text =
+                    "Error al crear partida: " + e.Message;
+            }
+
             Debug.LogError(e);
+
+            return "";
         }
         finally
         {
@@ -64,20 +83,31 @@ public class RelayConnectionManager : MonoBehaviour
 
     public async void JoinRelay(string joinCode)
     {
-        if (isConnecting || NetworkManager.Singleton.IsListening) return; // <-- guarda
+        if (isConnecting || NetworkManager.Singleton.IsListening)
+            return;
+
         isConnecting = true;
 
         try
         {
-            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-            var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-            transport.SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dtls"));
+            JoinAllocation joinAllocation =
+                await RelayService.Instance.JoinAllocationAsync(joinCode);
+
+            var transport =
+                NetworkManager.Singleton.GetComponent<UnityTransport>();
+
+            transport.SetRelayServerData(
+                AllocationUtils.ToRelayServerData(
+                    joinAllocation,
+                    "dtls"
+                )
+            );
+
             NetworkManager.Singleton.StartClient();
         }
         catch (System.Exception e)
         {
-            statusMessage = "Error al unirse: " + e.Message;
-            Debug.LogError(e);
+            Debug.LogError("Error al unirse a Relay: " + e);
         }
         finally
         {

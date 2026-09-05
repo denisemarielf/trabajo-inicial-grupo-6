@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/menuPrincipal.unity
     guid: da13761f574fe644d8171516374d42f8
   - enabled: 1
+    path: Assets/Scenes/salaEspera.unity
+    guid: 7b1dfec49b3f38441b5575600e6affc6
+  - enabled: 1
     path: Assets/Scenes/escenaPrincipal.unity
     guid: b39c05c71bd4fbc4db52814f37cc8220
   m_configObjects:
