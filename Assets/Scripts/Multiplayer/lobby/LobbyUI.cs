@@ -13,28 +13,64 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] private GameObject botonIniciarPartida;
     [SerializeField] private RelayConnectionManager relayManager;
 
-
     private float tiempoActualizacion = 0f;
     private float intervaloActualizacion = 0.5f;
     private bool clienteConectandose = false;
 
-    private void Start()
+
+private void Start()
+{
+    Debug.Log("LOBBY UI INICIADO");
+
+    Debug.Log(
+        "LobbyManager existe: " +
+        (LobbyManager.Instance != null)
+    );
+
+    if (LobbyManager.Instance != null)
     {
-        ActualizarUI();
+        Debug.Log(
+            "LobbyCode desde Start: " +
+            LobbyManager.Instance.GetLobbyCode()
+        );
+
+        Debug.Log(
+            "Cantidad desde Start: " +
+            LobbyManager.Instance.GetPlayerCount()
+        );
+
+        Debug.Log(
+            "Es Host desde Start: " +
+            LobbyManager.Instance.IsHost()
+        );
+
+        // PRUEBA DE DIAGNÓSTICO
+        Debug.Log(
+            "LOBBY UI - INSTANCE ID: " +
+            LobbyManager.Instance.GetEntityId()
+        );
+
+        Debug.Log(
+            "LOBBY UI - INSTANCE: " +
+            LobbyManager.Instance.gameObject.name
+        );
     }
 
-    private void Update()
+    ActualizarUI();
+}
+
+private void Update()
 {
     tiempoActualizacion += Time.deltaTime;
 
     if (tiempoActualizacion >= intervaloActualizacion)
     {
         tiempoActualizacion = 0f;
+
         ActualizarUI();
         ComprobarCliente();
     }
 }
-
     private void ActualizarUI()
     {
         if (LobbyManager.Instance == null)
@@ -45,6 +81,11 @@ public class LobbyUI : MonoBehaviour
 
         textoCodigo.text =
             "Código: " + LobbyManager.Instance.GetLobbyCode();
+
+        Debug.Log(
+            "UI actualizada - Código mostrado: " +
+            LobbyManager.Instance.GetLobbyCode()
+        );
 
         textoJugadores.text =
             "Jugadores: " + LobbyManager.Instance.GetPlayerCount();
@@ -66,26 +107,46 @@ public class LobbyUI : MonoBehaviour
 private void ComprobarCliente()
 {
     if (LobbyManager.Instance == null)
+    {
+        Debug.LogError("CLIENTE - No existe LobbyManager.");
         return;
+    }
 
-    // El Host no ejecuta esta lógica
-    if (LobbyManager.Instance.IsHost())
+    bool esHost = LobbyManager.Instance.IsHost();
+    bool partidaIniciada = LobbyManager.Instance.PartidaIniciada;
+    string codigoRelay = LobbyManager.Instance.GetCodigoRelay();
+
+    Debug.Log(
+        "CLIENTE - ComprobarCliente | " +
+        "EsHost: " + esHost +
+        " | PartidaIniciada: " + partidaIniciada +
+        " | CodigoRelay: " + codigoRelay +
+        " | Conectandose: " + clienteConectandose
+    );
+
+    if (esHost)
+    {
+        Debug.Log("CLIENTE - Se detiene porque IsHost() devuelve TRUE.");
         return;
+    }
 
-    // El Host todavía no inició
-    if (!LobbyManager.Instance.PartidaIniciada)
+    if (!partidaIniciada)
+    {
+        Debug.Log("CLIENTE - Se detiene porque PartidaIniciada es FALSE.");
         return;
+    }
 
-    // Evita intentar conectarse varias veces
     if (clienteConectandose)
+    {
+        Debug.Log("CLIENTE - Ya está intentando conectarse.");
         return;
+    }
 
-    string codigoRelay =
-        LobbyManager.Instance.GetCodigoRelay();
-
-    // Todavía no tenemos el código Relay
     if (string.IsNullOrEmpty(codigoRelay))
+    {
+        Debug.Log("CLIENTE - Se detiene porque no tiene CodigoRelay.");
         return;
+    }
 
     clienteConectandose = true;
 
@@ -94,7 +155,6 @@ private void ComprobarCliente()
 
     relayManager.JoinRelay(codigoRelay);
 }
-
     public async void IniciarPartida()
     {
         if (!LobbyManager.Instance.IsHost())
@@ -124,20 +184,20 @@ private void ComprobarCliente()
     }
 
     public async void SalirDeLaSala()
-{
-    Debug.Log("Saliendo de la sala...");
-
-    if (LobbyManager.Instance != null)
     {
-        await LobbyManager.Instance.SalirDelLobby();
-    }
+        Debug.Log("Saliendo de la sala...");
 
-    if (NetworkManager.Singleton != null &&
-        NetworkManager.Singleton.IsListening)
-    {
-        NetworkManager.Singleton.Shutdown();
-    }
+        if (LobbyManager.Instance != null)
+        {
+            await LobbyManager.Instance.SalirDelLobby();
+        }
 
-    SceneManager.LoadScene("menuPrincipal");
-}
+        if (NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        SceneManager.LoadScene("menuPrincipal");
+    }
 }

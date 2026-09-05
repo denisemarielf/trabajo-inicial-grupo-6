@@ -14,26 +14,45 @@ public class MainMenuUI : MonoBehaviour
     [Header("Referencia a Lobby")]
     public LobbyManager lobbyManager;
 
-    void Start()
+void Start()
+{Cursor.lockState = CursorLockMode.None;
+Cursor.visible = true;
+
+
+    btnCrearPartida.onClick.AddListener(OnCrearPartida);
+    btnUnirse.onClick.AddListener(OnUnirse);
+    btnSalir.onClick.AddListener(OnSalir);
+}
+
+private void OnCrearPartida()
+{
+    SetButtonsInteractable(false);
+
+    if (LobbyManager.Instance == null)
     {
-        btnCrearPartida.onClick.AddListener(OnCrearPartida);
-        btnUnirse.onClick.AddListener(OnUnirse);
-        btnSalir.onClick.AddListener(OnSalir);
+        Debug.LogError("No existe LobbyManager.");
+        SetButtonsInteractable(true);
+        return;
     }
 
-    private void OnCrearPartida()
+    LobbyManager.Instance.CrearLobby();
+}
+
+private void OnUnirse()
+{
+    string codigo = inputCodigoPartida.text.Trim().ToUpper();
+
+    SetButtonsInteractable(false);
+
+    if (LobbyManager.Instance == null)
     {
-        SetButtonsInteractable(false);
-        lobbyManager.CrearLobby();
+        Debug.LogError("No existe LobbyManager.");
+        SetButtonsInteractable(true);
+        return;
     }
 
-    private void OnUnirse()
-    {
-        string codigo = inputCodigoPartida.text.Trim().ToUpper();
-
-        SetButtonsInteractable(false);
-        lobbyManager.UnirseLobby(codigo);
-    }
+    LobbyManager.Instance.UnirseLobby(codigo);
+}
 
     private void OnSalir()
     {

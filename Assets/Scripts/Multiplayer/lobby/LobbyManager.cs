@@ -22,6 +22,8 @@ public class LobbyManager : MonoBehaviour
     private float tiempoActualizacion = 2f;
     private float tiempoTranscurrido = 0f;
 
+    private bool lobbyActivo = false;
+
     private async void Awake()
     {
         if (Instance != null && Instance != this)
@@ -68,7 +70,7 @@ public class LobbyManager : MonoBehaviour
 
     private async void Update()
     {
-        if (currentLobby == null)
+        if (!lobbyActivo || currentLobby == null)
             return;
 
         tiempoTranscurrido += Time.deltaTime;
@@ -85,11 +87,38 @@ public class LobbyManager : MonoBehaviour
     {
         try
         {
-            currentLobby =
+            if (!lobbyActivo || currentLobby == null)
+                return;
+
+            string lobbyId = currentLobby.Id;
+
+            Lobby lobbyActualizado =
                 await LobbyService.Instance.GetLobbyAsync(
-                    currentLobby.Id
+                    lobbyId
                 );
 
+            if (!lobbyActivo)
+                return;
+
+            currentLobby = lobbyActualizado;
+            
+
+Debug.Log(
+    "CLIENTE - PartidaIniciada recibido: " +
+    PartidaIniciada
+);
+
+if (currentLobby.Data != null)
+{
+    foreach (var dato in currentLobby.Data)
+    {
+        Debug.Log(
+            "CLIENTE - DATO LOBBY: " +
+            dato.Key + " = " +
+            dato.Value.Value
+        );
+    }
+}
             Debug.Log(
                 "Lobby actualizado. Jugadores: " +
                 currentLobby.Players.Count
@@ -104,53 +133,81 @@ public class LobbyManager : MonoBehaviour
         }
         catch (System.Exception e)
         {
+            if (!lobbyActivo)
+                return;
+
             Debug.LogError(
                 "Error actualizando Lobby: " + e
             );
         }
     }
 
-    public async void CrearLobby()
+
+public async void CrearLobby()
+{
+    try
     {
-        try
-        {
-            if (!AuthenticationService.Instance.IsSignedIn)
-            {
-                Debug.LogError(
-                    "El jugador no está autenticado."
-                );
-                return;
-            }
-
-            CreateLobbyOptions options =
-                new CreateLobbyOptions
-                {
-                    IsPrivate = false
-                };
-
-            currentLobby =
-                await LobbyService.Instance.CreateLobbyAsync(
-                    "Partida",
-                    4,
-                    options
-                );
-
-            LobbyCode = currentLobby.LobbyCode;
-
-            Debug.Log("Lobby creado.");
-            Debug.Log(
-                "Código del Lobby: " + LobbyCode
-            );
-
-            SceneManager.LoadScene("salaEspera");
-        }
-        catch (System.Exception e)
+        if (!AuthenticationService.Instance.IsSignedIn)
         {
             Debug.LogError(
-                "Error creando Lobby: " + e
+                "El jugador no está autenticado."
             );
+            return;
         }
+
+        CreateLobbyOptions options =
+            new CreateLobbyOptions
+            {
+                IsPrivate = false
+            };
+
+        currentLobby =
+            await LobbyService.Instance.CreateLobbyAsync(
+                "Partida",
+                4,
+                options
+            );
+
+        lobbyActivo = true;
+
+        // PRUEBA DE DIAGNÓSTICO
+        Debug.Log(
+            "NUEVO LOBBY CREADO - ID: " +
+            currentLobby.Id
+        );
+
+        Debug.Log(
+            "NUEVO LOBBY CODE: " +
+            currentLobby.LobbyCode
+        );
+
+        Debug.Log(
+            "CREAR LOBBY - INSTANCE ID: " +
+            GetEntityId()
+        );
+
+        Debug.Log(
+            "CREAR LOBBY - INSTANCE: " +
+            gameObject.name
+        );
+
+        LobbyCode = currentLobby.LobbyCode;
+
+        Debug.Log("Lobby creado.");
+        Debug.Log(
+            "Código del Lobby: " + LobbyCode
+        );
+
+        SceneManager.LoadScene("salaEspera");
     }
+    catch (System.Exception e)
+    {
+        Debug.LogError(
+            "Error creando Lobby: " + e
+        );
+    }
+}
+
 
     public async void UnirseLobby(string codigo)
     {
@@ -168,6 +225,8 @@ public class LobbyManager : MonoBehaviour
                 await LobbyService.Instance.JoinLobbyByCodeAsync(
                     codigo
                 );
+
+            lobbyActivo = true;
 
             LobbyCode = currentLobby.LobbyCode;
 
@@ -285,56 +344,69 @@ public class LobbyManager : MonoBehaviour
     }
 
     public string GetCodigoRelay()
-{
-    if (currentLobby != null &&
-        currentLobby.Data != null &&
-        currentLobby.Data.ContainsKey("CodigoRelay"))
     {
-        return currentLobby.Data["CodigoRelay"].Value;
-    }
-
-    return "";
-}
-
-public async Task SalirDelLobby()
-{
-    if (currentLobby == null)
-        return;
-
-    try
-    {
-        string playerId = AuthenticationService.Instance.PlayerId;
-
-        if (currentLobby.HostId == playerId)
+        if (currentLobby != null &&
+            currentLobby.Data != null &&
+            currentLobby.Data.ContainsKey("CodigoRelay"))
         {
-            await LobbyService.Instance.DeleteLobbyAsync(
-                currentLobby.Id
-            );
-
-            Debug.Log("Lobby eliminado por el Host.");
+            return currentLobby.Data["CodigoRelay"].Value;
         }
-        else
-        {
-            await LobbyService.Instance.RemovePlayerAsync(
-                currentLobby.Id,
-                playerId
-            );
 
-            Debug.Log("Jugador eliminado del Lobby.");
-        }
+        return "";
     }
-    catch (System.Exception e)
+
+    public void LimpiarLobbyLocal()
     {
-        Debug.LogError(
-            "Error saliendo del Lobby: " + e
-        );
-    }
-    finally
-    {
+        lobbyActivo = false;
+
         currentLobby = null;
         LobbyCode = "";
         PartidaIniciada = false;
+
+        Debug.Log("Lobby limpiado localmente.");
     }
-}
-    
+
+    public async Task SalirDelLobby()
+    {
+        if (currentLobby == null)
+            return;
+
+        try
+        {
+            string playerId =
+                AuthenticationService.Instance.PlayerId;
+
+            if (currentLobby.HostId == playerId)
+            {
+                await LobbyService.Instance.DeleteLobbyAsync(
+                    currentLobby.Id
+                );
+
+                Debug.Log("Lobby eliminado por el Host.");
+            }
+            else
+            {
+                await LobbyService.Instance.RemovePlayerAsync(
+                    currentLobby.Id,
+                    playerId
+                );
+
+                Debug.Log("Jugador eliminado del Lobby.");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(
+                "Error saliendo del Lobby: " + e
+            );
+        }
+        finally
+        {
+            lobbyActivo = false;
+
+            currentLobby = null;
+            LobbyCode = "";
+            PartidaIniciada = false;
+        }
+    }
 }

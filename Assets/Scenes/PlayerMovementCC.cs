@@ -85,13 +85,22 @@ public class PlayerMovementCC : NetworkBehaviour
             Desconectar();
         }
     }
-    private void Desconectar()
-    {
-        if (NetworkManager.Singleton == null)
-            return;
+private void Desconectar()
+{
+    if (NetworkManager.Singleton == null)
+        return;
 
-        NetworkManager.Singleton.Shutdown();
+    NetworkManager.Singleton.StartCoroutine(
+        DesconectarYVolverAlMenu()
+    );
+}
 
-        SceneManager.LoadScene("menuPrincipal");
-    }
+private System.Collections.IEnumerator DesconectarYVolverAlMenu()
+{
+    NetworkManager.Singleton.Shutdown();
+
+    yield return new WaitForSeconds(0.2f);
+
+    SceneManager.LoadScene("menuPrincipal");
+}
 }
