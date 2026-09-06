@@ -13,12 +13,14 @@ public class PlayerMovementCC : NetworkBehaviour
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController controller;
+    private PlayerHealth playerHealth;
     private Vector2 moveInput;
     private float verticalVelocity;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        playerHealth = GetComponent<PlayerHealth>();
     }
 
     private void Update()
@@ -26,19 +28,28 @@ public class PlayerMovementCC : NetworkBehaviour
         if (!IsOwner)
             return;
 
+        // Si estoy muerto, no puedo moverme ni interactuar con el escenario.
+        if (playerHealth != null && playerHealth.IsDead())
+            return;
         Move();
         ApplyGravity();
     }
 
-    // OnNetworkSpawn eliminado de ac� � esa responsabilidad ya la tiene PlayerCameraSetup.
-
+  
     public void OnMove(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.IsDead())
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
         moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnJump(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.IsDead())
+            return;
         if (context.performed && controller.isGrounded)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
