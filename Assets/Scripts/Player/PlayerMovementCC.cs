@@ -16,6 +16,7 @@ public class PlayerMovementCC : NetworkBehaviour
     private CharacterController controller;
     private Vector2 moveInput;
     private float verticalVelocity;
+    [SerializeField] private Animator animator;
 
     private void Awake()
     {
@@ -28,6 +29,7 @@ public class PlayerMovementCC : NetworkBehaviour
             return;
 
         Move();
+        UpdateAnimator();
         ApplyGravity();
     }
 
@@ -40,10 +42,17 @@ public class PlayerMovementCC : NetworkBehaviour
 
     public void OnJump(InputAction.CallbackContext context)
     {
+        if (!IsOwner) return;
+
         if (context.performed && controller.isGrounded)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+           // if (animator != null)
+             //   animator.SetTrigger("jump");
         }
+
+        
     }
 
     private NetworkVariable<float> speedMultiplier = new NetworkVariable<float>(
@@ -59,6 +68,11 @@ public class PlayerMovementCC : NetworkBehaviour
         controller.Move(movement * moveSpeed * speedMultiplier.Value * Time.deltaTime);
     }
 
+    private void UpdateAnimator()
+    {
+        if (animator == null) return;
+        animator.SetFloat("speed", moveInput.magnitude);
+    }
     private void ApplyGravity()
     {
         if (controller.isGrounded && verticalVelocity < 0)
