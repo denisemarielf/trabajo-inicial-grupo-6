@@ -21,6 +21,7 @@ public class Shoot : NetworkBehaviour
     public AudioClip emptySound;
     public ParticleSystem muzzleFlash;
     public WeaponSway weaponSway;
+    public int damageAmount = 20;
 
     private void Start()
     {
@@ -77,6 +78,13 @@ public class Shoot : NetworkBehaviour
     private void ShootServerRpc(Vector3 position, Quaternion rotation)
     {
         GameObject newBullet = Instantiate(bullet, position, rotation);
+
+        Bullet bulletScript = newBullet.GetComponent<Bullet>();
+        if (bulletScript != null)
+        {
+            bulletScript.setDamageAmount(damageAmount);
+        }
+
         NetworkObject netObj = newBullet.GetComponent<NetworkObject>();
         if (netObj != null)
         {
@@ -88,7 +96,6 @@ public class Shoot : NetworkBehaviour
             rb.AddForce(rotation * Vector3.forward * shootForce);
         }
         Destroy(newBullet, 3);
-
         // Avisamos a todos los clientes para que reproduzcan sonido/fogonazo/recoil
         PlayShootEffectsClientRpc();
     }
@@ -137,6 +144,11 @@ public class Shoot : NetworkBehaviour
     {
         if (audioSource != null && emptySound != null)
             audioSource.PlayOneShot(emptySound);
+    }
+    public void AddReserveAmmo(int amount)
+    {
+        reserveAmmo += amount;
+        
     }
 
     public int CurrentAmmo => currentAmmo;

@@ -138,4 +138,15 @@ public class PlayerHealth : NetworkBehaviour
     public bool IsDead() => isDeadNet.Value;
 
     public float GetHealthPercent() => currentHealth.Value / maxHealth;
+    public float GetCurrentHealth() => currentHealth.Value;
+    public void Heal(float amount)
+    {
+        if (!IsServer) return;
+        currentHealth.Value = Mathf.Min(currentHealth.Value + amount, maxHealth);
+    }
+    public void UpdateMaxHeal(float amount)
+    {
+        if (!IsServer) return;
+        maxHealth = amount;
+    }
 }

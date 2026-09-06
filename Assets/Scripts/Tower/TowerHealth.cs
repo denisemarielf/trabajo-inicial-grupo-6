@@ -50,6 +50,7 @@ public class TowerHealth : NetworkBehaviour
     private void DestroyTower()
     {
         isDestroyed = true;
+        Destroy(gameObject);
         Debug.Log("La torre fue destruida");
         PlayDestroySoundClientRpc();
         NotifyTowerDestroyedClientRpc();
