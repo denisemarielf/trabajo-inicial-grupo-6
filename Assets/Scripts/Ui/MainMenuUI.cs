@@ -10,7 +10,8 @@ public class MainMenuUI : MonoBehaviour
     public Button btnSalir;
     public TMP_InputField inputCodigoPartida;
     public TMP_Text statusText;
-
+    public AudioSource audioSource;
+    public AudioClip clickSound;
     [Header("Referencia a Lobby")]
     public LobbyManager lobbyManager;
 
@@ -34,8 +35,12 @@ private void OnCrearPartida()
         SetButtonsInteractable(true);
         return;
     }
+        if (clickSound != null)
+        {
+            audioSource.PlayOneShot(clickSound);
+        }
 
-    LobbyManager.Instance.CrearLobby();
+        LobbyManager.Instance.CrearLobby();
 }
 
 private void OnUnirse()
@@ -51,7 +56,12 @@ private void OnUnirse()
         return;
     }
 
-    LobbyManager.Instance.UnirseLobby(codigo);
+        if (clickSound != null)
+        {
+            audioSource.PlayOneShot(clickSound);
+        }
+
+        LobbyManager.Instance.UnirseLobby(codigo);
 }
 
     private void OnSalir()

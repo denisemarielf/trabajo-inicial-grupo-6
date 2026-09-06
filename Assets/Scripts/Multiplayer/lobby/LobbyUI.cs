@@ -12,6 +12,8 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] private TMP_Text textoEstado;
     [SerializeField] private GameObject botonIniciarPartida;
     [SerializeField] private RelayConnectionManager relayManager;
+    public AudioClip clickSound;
+    public AudioSource audioSource;
 
     private float tiempoActualizacion = 0f;
     private float intervaloActualizacion = 0.5f;
@@ -157,6 +159,10 @@ private void ComprobarCliente()
 }
     public async void IniciarPartida()
     {
+        if (clickSound != null)
+        {
+            audioSource.PlayOneShot(clickSound);
+        }
         if (!LobbyManager.Instance.IsHost())
             return;
 
@@ -176,6 +182,7 @@ private void ComprobarCliente()
         await LobbyManager.Instance.MarcarPartidaIniciada();
 
         NetworkManager.Singleton.StartHost();
+        
 
         NetworkManager.Singleton.SceneManager.LoadScene(
             "escenaPrincipal",
@@ -185,6 +192,10 @@ private void ComprobarCliente()
 
     public async void SalirDeLaSala()
     {
+        if (clickSound != null)
+        {
+            audioSource.PlayOneShot(clickSound);
+        }
         Debug.Log("Saliendo de la sala...");
 
         if (LobbyManager.Instance != null)
@@ -197,6 +208,7 @@ private void ComprobarCliente()
         {
             NetworkManager.Singleton.Shutdown();
         }
+        
 
         SceneManager.LoadScene("menuPrincipal");
     }

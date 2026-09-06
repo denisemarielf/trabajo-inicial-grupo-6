@@ -19,6 +19,8 @@ public class EnemyCombat : NetworkBehaviour
     private Transform tower;
     private Collider towerCollider;
     private NetworkAnimator networkAnimator;
+    public AudioSource audioSource;
+    public AudioClip attackSound;
 
     void Start()
     {
@@ -85,8 +87,8 @@ public class EnemyCombat : NetworkBehaviour
         lastAttackTime = Time.time;
         if (networkAnimator != null)
             networkAnimator.SetTrigger("attack");
-        if (animator != null)
-            animator.SetTrigger("attack"); // NetworkAnimator lo replica a todos los clientes
+       
+        
 
     }
 
@@ -110,11 +112,25 @@ public class EnemyCombat : NetworkBehaviour
         {
             PlayerHealth playerHealth = currentTarget.GetComponent<PlayerHealth>();
             if (playerHealth != null)
+            {
                 playerHealth.TakeDamage(attackDamage);
+                PlayAttackSoundClientRpc();
+            }
+                
+            
         }
     }
 
-        void OnDrawGizmosSelected()
+    [ClientRpc]
+    private void PlayAttackSoundClientRpc()
+    {
+        if (audioSource != null && attackSound != null)
+        {
+            audioSource.PlayOneShot(attackSound);
+        }
+    }
+
+    void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
