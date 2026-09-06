@@ -24,6 +24,7 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
     [SerializeField] private int enemiesSpawnCount;
+    
 
     public override void OnNetworkSpawn()
     {
@@ -106,4 +107,21 @@ public class GameManager : NetworkBehaviour
         if (newState == 1 && winPanel != null) winPanel.SetActive(true);
         if (newState == 2 && losePanel != null) losePanel.SetActive(true);
     }
+
+
+
+    private void setCountEnemies(int count)
+    {
+        GameObject[] spawnerObjs = GameObject.FindGameObjectsWithTag("Spawner");
+
+        foreach (GameObject obj in spawnerObjs)
+        {
+            EnemySpawner spawner = obj.GetComponent<EnemySpawner>();
+            if (spawner != null)
+            {
+                spawner.setEnemiesToSpawn(count);
+            }
+        }
+    }
+
 }

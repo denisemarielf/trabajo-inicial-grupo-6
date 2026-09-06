@@ -19,6 +19,10 @@ public class EnemyHealth : NetworkBehaviour
     private NetworkAnimator networkAnimator;
     public GameObject deathEffect;
     public float destroyDelay = 3f;
+    [Header("--------Audio--------")]
+    public AudioSource audioSource;
+    public AudioClip hitSound;
+    public AudioClip deathSound;
 
     private NetworkVariable<bool> isDeadNet = new NetworkVariable<bool>(
         false,
@@ -53,6 +57,11 @@ public class EnemyHealth : NetworkBehaviour
             networkAnimator.SetTrigger("hit");
         if (animator != null)
             animator.SetTrigger("hit"); // NetworkAnimator lo replica a los clientes
+        if (IsServer)
+        {
+            audioSource.PlayOneShot(hitSound);
+        }
+
 
         if (currentHealth.Value <= 0)
         {
@@ -69,6 +78,11 @@ public class EnemyHealth : NetworkBehaviour
             networkAnimator.SetTrigger("die");
         if (animator != null)
             animator.SetTrigger("die");
+
+        if (IsServer)
+        {
+            audioSource.PlayOneShot(deathSound);
+        }
 
         var ai = GetComponent<Ai>();
         if (ai != null) ai.enabled = false;

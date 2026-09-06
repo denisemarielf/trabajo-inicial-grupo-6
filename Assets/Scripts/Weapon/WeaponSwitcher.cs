@@ -149,6 +149,50 @@ public class WeaponSwitcher : NetworkBehaviour
             networkWeaponIndex.Value = index;
         }
     }
+    public void GrantAmmo(int amount)
+    {
+        if (!IsServer) return; // esto lo llama el PowerUp, que corre en el servidor
+        GrantAmmoClientRpc(amount);
+    }
+
+    [ClientRpc]
+    private void GrantAmmoClientRpc(int amount)
+    {
+        if (!IsOwner) return; // solo le importa al dueño de esta arma
+
+        foreach (var weapon in weapons)
+        {
+            if (weapon == null) continue;
+
+            Shoot shootComponent = weapon.GetComponent<Shoot>();
+            shootComponent?.AddReserveAmmo(amount);
+        }
+    }
+    public void ApplyDamageBoost(float multiplier, float duration)
+    {
+        if (!IsServer) return;
+        StartCoroutine(DamageBoostRoutine(multiplier, duration));
+    }
+
+    private System.Collections.IEnumerator DamageBoostRoutine(float multiplier, float duration)
+    {
+        Shoot boostedShoot = GetServerCurrentWeaponShoot();
+        if (boostedShoot == null) yield break;
+
+        int originalDamage = boostedShoot.damageAmount;
+        boostedShoot.damageAmount = Mathf.RoundToInt(originalDamage * multiplier);
+
+        yield return new WaitForSeconds(duration);
+
+        boostedShoot.damageAmount = originalDamage;
+    }
+
+    private Shoot GetServerCurrentWeaponShoot()
+    {
+        int index = networkWeaponIndex.Value;
+        if (index < 0 || index >= weapons.Length || weapons[index] == null) return null;
+        return weapons[index].GetComponent<Shoot>();
+    }
 
     private void PlaySwitchSound()
     {

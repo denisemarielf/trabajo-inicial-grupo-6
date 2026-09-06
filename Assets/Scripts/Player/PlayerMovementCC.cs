@@ -2,6 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovementCC : NetworkBehaviour
@@ -32,7 +33,7 @@ public class PlayerMovementCC : NetworkBehaviour
         ApplyGravity();
     }
 
-    // OnNetworkSpawn eliminado de acá — esa responsabilidad ya la tiene PlayerCameraSetup.
+    // OnNetworkSpawn eliminado de acï¿½ ï¿½ esa responsabilidad ya la tiene PlayerCameraSetup.
 
     public void OnMove(InputAction.CallbackContext context)
     {
@@ -54,12 +55,17 @@ public class PlayerMovementCC : NetworkBehaviour
         
     }
 
+    private NetworkVariable<float> speedMultiplier = new NetworkVariable<float>(
+    1f,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+);
     private void Move()
     {
         Vector3 movement =
             transform.right * moveInput.x +
             transform.forward * moveInput.y;
-        controller.Move(movement * moveSpeed * Time.deltaTime);
+        controller.Move(movement * moveSpeed * speedMultiplier.Value * Time.deltaTime);
     }
 
     private void UpdateAnimator()
@@ -79,6 +85,19 @@ public class PlayerMovementCC : NetworkBehaviour
         );
     }
 
+    public void ApplySpeedBoost(float multiplier, float duration)
+    {
+        if (!IsServer) return;
+        StartCoroutine(SpeedBoostRoutine(multiplier, duration));
+    }
+
+    private IEnumerator SpeedBoostRoutine(float multiplier, float duration)
+    {
+        speedMultiplier.Value = multiplier;
+        yield return new WaitForSeconds(duration);
+        speedMultiplier.Value = 1f;
+    }
+
     public void OnDisconnect(InputAction.CallbackContext context)
     {
         if (context.performed)
@@ -86,13 +105,22 @@ public class PlayerMovementCC : NetworkBehaviour
             Desconectar();
         }
     }
+private void Desconectar()
+{
+    if (NetworkManager.Singleton == null)
+        return;
 
-    private void Desconectar()
-    {
-        if (NetworkManager.Singleton == null)
-            return;
+    NetworkManager.Singleton.StartCoroutine(
+        DesconectarYVolverAlMenu()
+    );
+}
 
-        NetworkManager.Singleton.Shutdown();
-        SceneManager.LoadScene("menuPrincipal");
-    }
+private System.Collections.IEnumerator DesconectarYVolverAlMenu()
+{
+    NetworkManager.Singleton.Shutdown();
+
+    yield return new WaitForSeconds(0.2f);
+
+    SceneManager.LoadScene("menuPrincipal");
+}
 }
