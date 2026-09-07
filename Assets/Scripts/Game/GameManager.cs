@@ -23,8 +23,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
-    [SerializeField] private int enemiesSpawnCount;
-    
+    [SerializeField] private int enemiesToSpawn;
+    [SerializeField] private float waveInterval = 30f;
+
 
     public override void OnNetworkSpawn()
     {
@@ -33,10 +34,12 @@ public class GameManager : NetworkBehaviour
 
         if (IsServer)
         {
+            ConfigureSpawners(enemiesToSpawn, waveInterval);
             networkTimeRemaining.Value = matchDuration;
             TowerHealth.OnTowerDestroyed += HandleTowerDestroyed;
             PlayerHealth.OnPlayerDied += HandlePlayerDied;
         }
+
 
         networkMatchState.OnValueChanged += OnMatchStateChanged;
         networkTimeRemaining.OnValueChanged += (oldVal, newVal) => UpdateTimerUI(newVal);
@@ -117,18 +120,20 @@ public class GameManager : NetworkBehaviour
 
 
 
-    private void setCountEnemies(int count)
+    public void ConfigureSpawners(int count, float interval)
     {
         GameObject[] spawnerObjs = GameObject.FindGameObjectsWithTag("Spawner");
-
         foreach (GameObject obj in spawnerObjs)
         {
             EnemySpawner spawner = obj.GetComponent<EnemySpawner>();
             if (spawner != null)
             {
                 spawner.setEnemiesToSpawn(count);
+                spawner.setWaveInterval(interval);
             }
         }
     }
+
+
 
 }

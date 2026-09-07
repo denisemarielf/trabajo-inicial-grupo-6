@@ -9,13 +9,23 @@ public class EnemySpawner : NetworkBehaviour
     public Transform spawnPoint;
     public int enemiesToSpawn = 20;
     public float timeSpawns = 2f;
+    [Header("--------Oleadas--------")]
+    public float waveInterval = 30f;
 
     public override void OnNetworkSpawn()
     {
        
         if (!IsServer) return;
 
-        StartCoroutine(SpawnEnemies());
+        StartCoroutine(SpawnWavesLoop());
+    }
+    private IEnumerator SpawnWavesLoop()
+    {
+        while (true)
+        {
+            yield return StartCoroutine(SpawnEnemies());
+            yield return new WaitForSeconds(waveInterval);
+        }
     }
 
     private IEnumerator SpawnEnemies()
@@ -41,5 +51,9 @@ public class EnemySpawner : NetworkBehaviour
     public void setEnemiesToSpawn(int number)
     {
         enemiesToSpawn = number;
+    }
+    public void setWaveInterval(float number)
+    {
+        waveInterval = number;
     }
 }
