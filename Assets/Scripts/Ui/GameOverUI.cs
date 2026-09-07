@@ -468,6 +468,19 @@ public class GameOverUI : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+        // Ocultar panel de derrota individual si estaba activo
+        if (PersonalLosePanel.Instance != null)
+        {
+            PersonalLosePanel.Instance.gameObject.SetActive(false);
+        }
+
+        // Cancelar cualquier corrutina de desconexión por muerte individual para sincronizar con GameOverUI
+        PlayerHealth[] allPlayers = FindObjectsByType<PlayerHealth>(FindObjectsInactive.Include);
+        foreach (var ph in allPlayers)
+        {
+            if (ph != null) ph.CancelReturnToMenu();
+        }
+
         OcultarHudsDelJuego();
         DesactivarControlesJugador();
 

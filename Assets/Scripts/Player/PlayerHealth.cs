@@ -33,8 +33,12 @@ public class PlayerHealth : NetworkBehaviour
     private PlayerHealthUI healthUI;
 
     [Header("--------Derrota individual--------")]
+    [Tooltip("Si es true, el cliente se desconecta automáticamente al morir tras el retraso. Si es false, espera en la partida a que termine para ver la pantalla de fin de partida.")]
+    [SerializeField] private bool disconnectClientOnDeath = false;
     [SerializeField] private float returnToMenuDelay = 3f;
-    [SerializeField] private string menuSceneName = "MainMenu";
+    [SerializeField] private string menuSceneName = "menuPrincipal";
+
+    private Coroutine returnRoutine;
 
     public override void OnNetworkSpawn()
     {
@@ -89,6 +93,7 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsServer) return;
         if (isDeadNet.Value) return;
+        if (GameManager.Instance != null && GameManager.Instance.IsMatchOver) return;
 
         currentHealth.Value -= amount;
 
@@ -128,7 +133,13 @@ public class PlayerHealth : NetworkBehaviour
        
         OnPlayerDied?.Invoke(OwnerClientId);
 
-      
+        // Si la partida ya terminó a nivel global (derrota o victoria global),
+        // no enviamos derrota individual con desconexión: se muestra GameOverUI sincronizado.
+        if (GameManager.Instance != null && GameManager.Instance.IsMatchOver)
+        {
+            return;
+        }
+
         ClientRpcParams clientRpcParams = new ClientRpcParams
         {
             Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } }
@@ -139,7 +150,11 @@ public class PlayerHealth : NetworkBehaviour
     [ClientRpc]
     private void ShowPersonalLoseClientRpc(ClientRpcParams rpcParams = default)
     {
-    
+        if (GameManager.Instance != null && GameManager.Instance.IsMatchOver)
+        {
+            return;
+        }
+
         if (PersonalLosePanel.Instance != null)
         {
             PersonalLosePanel.Instance.Show();
@@ -149,24 +164,44 @@ public class PlayerHealth : NetworkBehaviour
             Debug.LogWarning("[PlayerHealth] No se encontro PersonalLosePanel.Instance en la escena.");
         }
 
-        
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
         {
             Debug.Log("[PlayerHealth] Murió el host: se queda como servidor, sin Shutdown local.");
             return;
         }
 
-        StartCoroutine(ReturnToMenuAfterDelay());
+        if (disconnectClientOnDeath)
+        {
+            if (returnRoutine != null) StopCoroutine(returnRoutine);
+            returnRoutine = StartCoroutine(ReturnToMenuAfterDelay());
+        }
     }
 
     private IEnumerator ReturnToMenuAfterDelay()
     {
         yield return new WaitForSeconds(returnToMenuDelay);
 
+        // Si la partida terminó a nivel global mientras esperaba, NO desconectar
+        if (GameManager.Instance != null && GameManager.Instance.IsMatchOver)
+        {
+            returnRoutine = null;
+            yield break;
+        }
+
         if (NetworkManager.Singleton != null)
             NetworkManager.Singleton.Shutdown(); // se desconecta de la partida
 
-        SceneManager.LoadScene("menuPrincipal"); // vuelve a SU menú local
+        SceneManager.LoadScene(menuSceneName); // vuelve a SU menú local
+        returnRoutine = null;
+    }
+
+    public void CancelReturnToMenu()
+    {
+        if (returnRoutine != null)
+        {
+            StopCoroutine(returnRoutine);
+            returnRoutine = null;
+        }
     }
 
 

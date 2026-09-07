@@ -28,6 +28,8 @@ public class GameManager : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    public bool IsMatchOver => networkMatchState != null && networkMatchState.Value != 0;
+
     [Header("--------UI--------")]
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private GameObject winPanel;
