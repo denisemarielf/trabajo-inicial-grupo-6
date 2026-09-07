@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
@@ -63,11 +63,14 @@ public class GameManager : NetworkBehaviour
 
         if (IsServer)
         {
+            CleanUpMigratedEnemies();
             ConfigureSpawners(enemiesToSpawn, waveInterval);
             networkTimeRemaining.Value = matchDuration;
             TowerHealth.OnTowerDestroyed += HandleTowerDestroyed;
             PlayerHealth.OnPlayerDied += HandlePlayerDied;
             EnemyHealth.OnEnemyDied += HandleEnemyDied;
+
+            StartCoroutine(ResetPlayersRoutine());
         }
 
         networkMatchState.OnValueChanged += OnMatchStateChanged;
@@ -106,6 +109,45 @@ public class GameManager : NetworkBehaviour
         if (!IsServer) return;
         alivePlayers.Add(clientId);
         Debug.Log($"[GameManager] RegisterPlayer({clientId}). Total registrados: {alivePlayers.Count} -> [{string.Join(",", alivePlayers)}]");
+    }
+
+    private void CleanUpMigratedEnemies()
+    {
+        if (!IsServer) return;
+        EnemyHealth[] enemies = FindObjectsByType<EnemyHealth>(FindObjectsInactive.Include);
+        foreach (var enemy in enemies)
+        {
+            if (enemy == null) continue;
+            if (enemy.NetworkObject != null && enemy.NetworkObject.IsSpawned)
+            {
+                enemy.NetworkObject.Despawn(true);
+            }
+            else
+            {
+                Destroy(enemy.gameObject);
+            }
+        }
+    }
+
+    private IEnumerator ResetPlayersRoutine()
+    {
+        // Esperar un frame a que la escena se asiente
+        yield return null;
+
+        PlayerHealth[] allPlayers = FindObjectsByType<PlayerHealth>(FindObjectsInactive.Include);
+        Vector3 baseSpawn = new Vector3(270f, 33f, 250f);
+        int i = 0;
+        alivePlayers.Clear();
+
+        foreach (var ph in allPlayers)
+        {
+            if (ph == null) continue;
+            Vector3 spawnPos = baseSpawn + new Vector3(i * 2.5f, 0f, 0f);
+            ph.ResetPlayerForNewMatch(spawnPos);
+            alivePlayers.Add(ph.OwnerClientId);
+            i++;
+        }
+        Debug.Log($"[GameManager] Jugadores reiniciados: {alivePlayers.Count} registrados.");
     }
 
     private void UpdateTimerUI(float time)
@@ -149,17 +191,40 @@ public class GameManager : NetworkBehaviour
     private void Win()
     {
         if (networkMatchState.Value != 0) return;
-        if (matchEndReason.Value < 0) matchEndReason.Value = (int)MatchResultReason.SurviveTime;
+        MatchResultReason reason = (matchEndReason.Value >= 0)
+            ? (MatchResultReason)matchEndReason.Value
+            : MatchResultReason.SurviveTime;
+        matchEndReason.Value = (int)reason;
         networkMatchState.Value = 1;
+
+        ShowGameOverClientRpc((int)reason, totalKills.Value);
+
         if (autoReturnToMenu) StartCoroutine(EndMatchRoutine());
     }
 
     private void Lose()
     {
         if (networkMatchState.Value != 0) return;
-        if (matchEndReason.Value < 0) matchEndReason.Value = (int)MatchResultReason.OutOfLives;
+        MatchResultReason reason = (matchEndReason.Value >= 0)
+            ? (MatchResultReason)matchEndReason.Value
+            : MatchResultReason.OutOfLives;
+        matchEndReason.Value = (int)reason;
         networkMatchState.Value = 2;
+
+        ShowGameOverClientRpc((int)reason, totalKills.Value);
+
         if (autoReturnToMenu) StartCoroutine(EndMatchRoutine());
+    }
+
+    [ClientRpc]
+    private void ShowGameOverClientRpc(int reasonInt, int kills)
+    {
+        Debug.Log($"[GameManager] ShowGameOverClientRpc recibido. Motivo: {(MatchResultReason)reasonInt}, Bajas: {kills}");
+        GameOverUI ui = GameOverUI.EnsureInstance();
+        if (ui != null)
+        {
+            ui.Show((MatchResultReason)reasonInt, kills);
+        }
     }
 
     private IEnumerator EndMatchRoutine()
@@ -172,17 +237,6 @@ public class GameManager : NetworkBehaviour
     {
         if (newState == 1 && winPanel != null) winPanel.SetActive(true);
         if (newState == 2 && losePanel != null) losePanel.SetActive(true);
-
-        GameOverUI ui = GameOverUI.EnsureInstance();
-        if (ui != null)
-        {
-            MatchResultReason reason = (MatchResultReason)matchEndReason.Value;
-            if (reason == MatchResultReason.None)
-            {
-                reason = newState == 1 ? MatchResultReason.SurviveTime : MatchResultReason.OutOfLives;
-            }
-            ui.Show(reason, totalKills.Value);
-        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -196,6 +250,8 @@ public class GameManager : NetworkBehaviour
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && NetworkManager.Singleton.IsServer)
         {
+            CleanUpMigratedEnemies();
+
             if (NetworkManager.Singleton.SceneManager != null)
             {
                 Debug.Log("[GameManager] Reiniciando partida sincronizada con NetworkSceneManager...");

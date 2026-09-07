@@ -1,4 +1,4 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -25,6 +25,16 @@ public class PlayerMovementCC : NetworkBehaviour
         playerHealth = GetComponent<PlayerHealth>();
     }
 
+    public void ResetMovement()
+    {
+        verticalVelocity = 0f;
+        moveInput = Vector2.zero;
+        if (animator != null)
+        {
+            animator.SetFloat("speed", 0f);
+        }
+    }
+
     private void Update()
     {
         if (!IsOwner)
@@ -33,12 +43,12 @@ public class PlayerMovementCC : NetworkBehaviour
         // Si estoy muerto, no puedo moverme ni interactuar con el escenario.
         if (playerHealth != null && playerHealth.IsDead())
             return;
+
         Move();
         UpdateAnimator();
         ApplyGravity();
     }
 
-  
     public void OnMove(InputAction.CallbackContext context)
     {
         if (playerHealth != null && playerHealth.IsDead())
@@ -55,24 +65,22 @@ public class PlayerMovementCC : NetworkBehaviour
 
         if (playerHealth != null && playerHealth.IsDead())
             return;
-        if (context.performed && controller.isGrounded)
+
+        if (context.performed && controller != null && controller.isGrounded)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-
-           // if (animator != null)
-             //   animator.SetTrigger("jump");
         }
-
-        
     }
 
     private NetworkVariable<float> speedMultiplier = new NetworkVariable<float>(
-    1f,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server
-);
+        1f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     private void Move()
     {
+        if (controller == null) return;
         Vector3 movement =
             transform.right * moveInput.x +
             transform.forward * moveInput.y;
@@ -84,8 +92,10 @@ public class PlayerMovementCC : NetworkBehaviour
         if (animator == null) return;
         animator.SetFloat("speed", moveInput.magnitude);
     }
+
     private void ApplyGravity()
     {
+        if (controller == null) return;
         if (controller.isGrounded && verticalVelocity < 0)
         {
             verticalVelocity = -2f;
@@ -116,22 +126,21 @@ public class PlayerMovementCC : NetworkBehaviour
             Desconectar();
         }
     }
-private void Desconectar()
-{
-    if (NetworkManager.Singleton == null)
-        return;
 
-    NetworkManager.Singleton.StartCoroutine(
-        DesconectarYVolverAlMenu()
-    );
-}
+    private void Desconectar()
+    {
+        if (NetworkManager.Singleton == null)
+            return;
 
-private System.Collections.IEnumerator DesconectarYVolverAlMenu()
-{
-    NetworkManager.Singleton.Shutdown();
+        NetworkManager.Singleton.StartCoroutine(
+            DesconectarYVolverAlMenu()
+        );
+    }
 
-    yield return new WaitForSeconds(0.2f);
-
-    SceneManager.LoadScene("menuPrincipal");
-}
+    private System.Collections.IEnumerator DesconectarYVolverAlMenu()
+    {
+        NetworkManager.Singleton.Shutdown();
+        yield return new WaitForSeconds(0.2f);
+        SceneManager.LoadScene("menuPrincipal");
+    }
 }

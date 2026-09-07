@@ -96,7 +96,6 @@ public class GameOverUI : MonoBehaviour
 
         EnsureEventSystemExists();
 
-        // Crear o reutilizar un Canvas dedicado exclusivo para GameOver con la maxima prioridad de orden
         GameObject canvasGo = GameObject.Find("GameOverCanvas");
         Canvas canvas = null;
         if (canvasGo == null)
@@ -150,6 +149,7 @@ public class GameOverUI : MonoBehaviour
         }
 
         Instance = this;
+        isGameOverActive = false;
 
         EnsureEventSystemExists();
         EnsureUIBuilt();
@@ -239,9 +239,6 @@ public class GameOverUI : MonoBehaviour
         EnsureUIBuilt();
     }
 
-    /// <summary>
-    /// Construye una interfaz limpia, solida y profesional.
-    /// </summary>
     public void EnsureUIBuilt()
     {
         if (rootPanel != null) return;
@@ -289,7 +286,7 @@ public class GameOverUI : MonoBehaviour
         rtRoot.offsetMin = new Vector2(-1500, -1500);
         rtRoot.offsetMax = new Vector2(1500, 1500);
         Image imgRoot = rootPanel.GetComponent<Image>();
-        imgRoot.color = new Color(0.02f, 0.03f, 0.05f, 0.96f); // Totalmente oscuro y opaco para tapar el mundo 3D
+        imgRoot.color = new Color(0.02f, 0.03f, 0.05f, 0.96f);
         imgRoot.raycastTarget = true;
         rootCanvasGroup = rootPanel.GetComponent<CanvasGroup>();
 
@@ -442,7 +439,7 @@ public class GameOverUI : MonoBehaviour
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
         tmp.text = label;
-        tmp.raycastTarget = false; // Important: no interceptar clics sobre el boton
+        tmp.raycastTarget = false;
 
         return btn;
     }
@@ -598,7 +595,6 @@ public class GameOverUI : MonoBehaviour
 
     private void DetenerActividadMundo()
     {
-        // 1. Desactivar y detener todos los spawners de enemigos
         EnemySpawner[] spawners = FindObjectsByType<EnemySpawner>(FindObjectsInactive.Exclude);
         foreach (var sp in spawners)
         {
@@ -609,7 +605,6 @@ public class GameOverUI : MonoBehaviour
             }
         }
 
-        // 2. Desactivar combate e IA de todos los enemigos en escena y frenar animaciones
         EnemyCombat[] combats = FindObjectsByType<EnemyCombat>(FindObjectsInactive.Exclude);
         foreach (var c in combats)
         {
@@ -637,7 +632,6 @@ public class GameOverUI : MonoBehaviour
             }
         }
 
-        // 3. Detener agentes de navegacion
         UnityEngine.AI.NavMeshAgent[] agents = FindObjectsByType<UnityEngine.AI.NavMeshAgent>(FindObjectsInactive.Exclude);
         foreach (var agent in agents)
         {
@@ -648,7 +642,6 @@ public class GameOverUI : MonoBehaviour
             }
         }
 
-        // 4. Detener disparos de armas
         Shoot[] shoots = FindObjectsByType<Shoot>(FindObjectsInactive.Exclude);
         foreach (var sh in shoots)
         {
@@ -713,7 +706,6 @@ public class GameOverUI : MonoBehaviour
         SafeHide(FindFirstObjectByType<TowerUi>());
         SafeHide(FindFirstObjectByType<sesionCodeUI>());
 
-        // Desactivar texto del temporizador si existe en la jerarquia
         TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Exclude);
         foreach (var t in texts)
         {
@@ -738,14 +730,12 @@ public class GameOverUI : MonoBehaviour
     {
         DesactivarCamarasJugador();
 
-        // Desactivar componentes de movimiento
         PlayerMovementCC[] movements = FindObjectsByType<PlayerMovementCC>(FindObjectsInactive.Exclude);
         foreach (var pm in movements)
         {
             if (pm != null) pm.enabled = false;
         }
 
-        // Desactivar disparos y armas
         Shoot[] shoots = FindObjectsByType<Shoot>(FindObjectsInactive.Exclude);
         foreach (var sh in shoots)
         {
@@ -773,6 +763,43 @@ public class GameOverUI : MonoBehaviour
         }
     }
 
+    public void RestaurarControlesJugador()
+    {
+        PlayerMovementCC[] movements = FindObjectsByType<PlayerMovementCC>(FindObjectsInactive.Include);
+        foreach (var pm in movements)
+        {
+            if (pm != null) pm.enabled = true;
+        }
+
+        Shoot[] shoots = FindObjectsByType<Shoot>(FindObjectsInactive.Include);
+        foreach (var sh in shoots)
+        {
+            if (sh != null) sh.enabled = true;
+        }
+
+        CameraControllerFPS[] cams = FindObjectsByType<CameraControllerFPS>(FindObjectsInactive.Include);
+        foreach (var cam in cams)
+        {
+            if (cam != null)
+            {
+                cam.enabled = true;
+                if (cam.IsOwner)
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
+            }
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.PlayerInput[] inputs = FindObjectsByType<UnityEngine.InputSystem.PlayerInput>(FindObjectsInactive.Include);
+        foreach (var input in inputs)
+        {
+            if (input != null) input.ActivateInput();
+        }
+#endif
+    }
+
     public void Hide()
     {
         isGameOverActive = false;
@@ -784,6 +811,8 @@ public class GameOverUI : MonoBehaviour
         {
             rootPanel.SetActive(false);
         }
+
+        RestaurarControlesJugador();
     }
 
     private void HandleMainMenuClick()
@@ -852,6 +881,12 @@ public class GameOverUI : MonoBehaviour
         {
             if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
             {
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.RestartMatch();
+                    return;
+                }
+
                 if (NetworkManager.Singleton.SceneManager != null)
                 {
                     Debug.Log("[GameOverUI] Host reiniciando escena con NetworkSceneManager: " + SceneManager.GetActiveScene().name);
