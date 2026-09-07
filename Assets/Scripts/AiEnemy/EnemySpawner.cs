@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -14,16 +14,23 @@ public class EnemySpawner : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-       
         if (!IsServer) return;
 
         StartCoroutine(SpawnWavesLoop());
     }
+
     private IEnumerator SpawnWavesLoop()
     {
         while (true)
         {
+            if (GameManager.Instance != null && GameManager.Instance.IsMatchOver)
+                yield break;
+
             yield return StartCoroutine(SpawnEnemies());
+
+            if (GameManager.Instance != null && GameManager.Instance.IsMatchOver)
+                yield break;
+
             yield return new WaitForSeconds(waveInterval);
         }
     }
@@ -32,16 +39,22 @@ public class EnemySpawner : NetworkBehaviour
     {
         for (int i = 0; i < enemiesToSpawn; i++)
         {
-            GameObject enemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
+            if (GameManager.Instance != null && GameManager.Instance.IsMatchOver)
+                yield break;
 
-            NetworkObject netObj = enemy.GetComponent<NetworkObject>();
-            if (netObj != null)
+            if (enemyPrefab != null && spawnPoint != null)
             {
-                netObj.Spawn(); 
-            }
-            else
-            {
-                Debug.LogError("enemyPrefab no tiene NetworkObject asignado.");
+                GameObject enemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
+
+                NetworkObject netObj = enemy.GetComponent<NetworkObject>();
+                if (netObj != null)
+                {
+                    netObj.Spawn();
+                }
+                else
+                {
+                    Debug.LogError("enemyPrefab no tiene NetworkObject asignado.");
+                }
             }
 
             yield return new WaitForSeconds(timeSpawns);
@@ -52,6 +65,7 @@ public class EnemySpawner : NetworkBehaviour
     {
         enemiesToSpawn = number;
     }
+
     public void setWaveInterval(float number)
     {
         waveInterval = number;

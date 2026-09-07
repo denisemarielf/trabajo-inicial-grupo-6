@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
@@ -12,7 +12,7 @@ public class GameManager : NetworkBehaviour
     public float matchDuration = 120f; // 2 minutos
 
     [Header("--------Config--------")]
-    [Tooltip("Si es true, vuelve automáticamente al menú tras el retraso configurado. Si es false, los jugadores usan los botones de la pantalla de fin de partida.")]
+    [Tooltip("Si es true, vuelve automaticamente al menu tras el retraso configurado. Si es false, los jugadores usan los botones de la pantalla de fin de partida.")]
     [SerializeField] private bool autoReturnToMenu = false;
     [SerializeField] private float returnToMenuDelay = 3f;
     [SerializeField] private string menuSceneName = "menuPrincipal";
@@ -27,8 +27,19 @@ public class GameManager : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+    private NetworkVariable<int> totalKills = new NetworkVariable<int>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+    private NetworkVariable<int> matchEndReason = new NetworkVariable<int>(
+        -1,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     public bool IsMatchOver => networkMatchState != null && networkMatchState.Value != 0;
+    public int TotalKills => totalKills != null ? totalKills.Value : 0;
 
     [Header("--------UI--------")]
     [SerializeField] private TMP_Text timerText;
@@ -37,7 +48,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private int enemiesToSpawn;
     [SerializeField] private float waveInterval = 30f;
 
-    
     // Server-only: jugadores que siguen vivos en la partida
     private readonly HashSet<ulong> alivePlayers = new HashSet<ulong>();
 
@@ -57,8 +67,8 @@ public class GameManager : NetworkBehaviour
             networkTimeRemaining.Value = matchDuration;
             TowerHealth.OnTowerDestroyed += HandleTowerDestroyed;
             PlayerHealth.OnPlayerDied += HandlePlayerDied;
+            EnemyHealth.OnEnemyDied += HandleEnemyDied;
         }
-
 
         networkMatchState.OnValueChanged += OnMatchStateChanged;
         networkTimeRemaining.OnValueChanged += (oldVal, newVal) => UpdateTimerUI(newVal);
@@ -71,6 +81,7 @@ public class GameManager : NetworkBehaviour
         {
             TowerHealth.OnTowerDestroyed -= HandleTowerDestroyed;
             PlayerHealth.OnPlayerDied -= HandlePlayerDied;
+            EnemyHealth.OnEnemyDied -= HandleEnemyDied;
         }
         networkMatchState.OnValueChanged -= OnMatchStateChanged;
     }
@@ -85,11 +96,11 @@ public class GameManager : NetworkBehaviour
         if (networkTimeRemaining.Value <= 0)
         {
             networkTimeRemaining.Value = 0;
+            matchEndReason.Value = (int)MatchResultReason.SurviveTime;
             Win();
         }
     }
 
-    // Llamado por PlayerHealth (server-side) cuando un jugador spawnea, para saber cuantos hay en total
     public void RegisterPlayer(ulong clientId)
     {
         if (!IsServer) return;
@@ -109,10 +120,10 @@ public class GameManager : NetworkBehaviour
     {
         if (networkMatchState.Value != 0) return;
         Debug.Log("DERROTA GLOBAL. La torre fue destruida.");
+        matchEndReason.Value = (int)MatchResultReason.TowerDestroyed;
         Lose();
     }
 
-    // Ahora recibe el clientId del jugador que murio
     private void HandlePlayerDied(ulong clientId)
     {
         if (networkMatchState.Value != 0) return;
@@ -120,19 +131,25 @@ public class GameManager : NetworkBehaviour
         alivePlayers.Remove(clientId);
         Debug.Log($"[GameManager] Jugador {clientId} murio. Quedan vivos: {alivePlayers.Count} -> [{string.Join(",", alivePlayers)}]");
 
-        // Solo es derrota GLOBAL si ya no queda nadie vivo
         if (alivePlayers.Count <= 0)
         {
             Debug.Log("DERROTA GLOBAL. Todos los jugadores murieron.");
+            matchEndReason.Value = (int)MatchResultReason.OutOfLives;
             Lose();
         }
-        // Si quedan jugadores vivos, no pasa nada a nivel global.
-        // El jugador que murio ya recibe su propio panel individual desde PlayerHealth.
+    }
+
+    private void HandleEnemyDied()
+    {
+        if (!IsServer) return;
+        totalKills.Value++;
+        Debug.Log($"[GameManager] Enemigo eliminado. Total bajas: {totalKills.Value}");
     }
 
     private void Win()
     {
         if (networkMatchState.Value != 0) return;
+        if (matchEndReason.Value < 0) matchEndReason.Value = (int)MatchResultReason.SurviveTime;
         networkMatchState.Value = 1;
         if (autoReturnToMenu) StartCoroutine(EndMatchRoutine());
     }
@@ -140,15 +157,15 @@ public class GameManager : NetworkBehaviour
     private void Lose()
     {
         if (networkMatchState.Value != 0) return;
+        if (matchEndReason.Value < 0) matchEndReason.Value = (int)MatchResultReason.OutOfLives;
         networkMatchState.Value = 2;
         if (autoReturnToMenu) StartCoroutine(EndMatchRoutine());
     }
 
-    // Server-only: espera y luego manda a TODOS los clientes conectados al menu
     private IEnumerator EndMatchRoutine()
     {
         yield return new WaitForSeconds(returnToMenuDelay);
-        NetworkManager.Singleton.SceneManager.LoadScene("menuPrincipal", UnityEngine.SceneManagement.LoadSceneMode.Single);
+        NetworkManager.Singleton.SceneManager.LoadScene(menuSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
 
     private void OnMatchStateChanged(int oldState, int newState)
@@ -159,12 +176,42 @@ public class GameManager : NetworkBehaviour
         GameOverUI ui = GameOverUI.EnsureInstance();
         if (ui != null)
         {
-            if (newState == 1) ui.Show(true);
-            else if (newState == 2) ui.Show(false);
+            MatchResultReason reason = (MatchResultReason)matchEndReason.Value;
+            if (reason == MatchResultReason.None)
+            {
+                reason = newState == 1 ? MatchResultReason.SurviveTime : MatchResultReason.OutOfLives;
+            }
+            ui.Show(reason, totalKills.Value);
         }
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestRestartMatchServerRpc()
+    {
+        Debug.Log("[GameManager] Servidor recibio peticion de reinicio de partida.");
+        RestartMatch();
+    }
 
+    public void RestartMatch()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && NetworkManager.Singleton.IsServer)
+        {
+            if (NetworkManager.Singleton.SceneManager != null)
+            {
+                Debug.Log("[GameManager] Reiniciando partida sincronizada con NetworkSceneManager...");
+                NetworkManager.Singleton.SceneManager.LoadScene(
+                    UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+                    UnityEngine.SceneManagement.LoadSceneMode.Single
+                );
+                return;
+            }
+        }
+
+        Debug.Log("[GameManager] Reiniciando escena localmente...");
+        UnityEngine.SceneManagement.SceneManager.LoadScene(
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+        );
+    }
 
     public void ConfigureSpawners(int count, float interval)
     {
@@ -179,7 +226,4 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
-
-
-
 }

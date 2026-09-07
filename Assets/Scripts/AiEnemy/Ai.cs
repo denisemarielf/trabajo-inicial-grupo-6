@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.AI;
 using Unity.Netcode;
 
@@ -7,7 +7,7 @@ public class Ai : NetworkBehaviour
     public NavMeshAgent navMeshAgent;
     public GameObject destination1;
     [Header("--------Follow Header--------")]
-    private Transform player; // el jugador vivo más cercano en este momento (puede ser null)
+    private Transform player; // el jugador vivo mas cercano en este momento (puede ser null)
     private PlayerHealth playerHealth;
     public bool followPlayer;
     private float distanceToPlayer;
@@ -19,12 +19,12 @@ public class Ai : NetworkBehaviour
     private float repathThreshold = 0.5f;
     private bool isFollowingPlayer;
     [Header("--------Player Search--------")]
-    private float playerSearchInterval = 0.5f; // cada cuánto rebusca al jugador más cercano
+    private float playerSearchInterval = 0.5f; // cada cuanto rebusca al jugador mas cercano
     private float playerSearchTimer = 0f;
     public Transform CurrentPlayer => player;
 
-    // Sincroniza la velocidad para que la animación se vea bien en TODOS los clientes,
-    // no solo en el server (que es el único que realmente mueve el NavMeshAgent).
+    // Sincroniza la velocidad para que la animacion se vea bien en TODOS los clientes,
+    // no solo en el server (que es el unico que realmente mueve el NavMeshAgent).
     private NetworkVariable<float> networkSpeed = new NetworkVariable<float>(
         0f,
         NetworkVariableReadPermission.Everyone,
@@ -37,7 +37,7 @@ public class Ai : NetworkBehaviour
         enemyCombat = GetComponent<EnemyCombat>();
 
         // La IA solo la calcula el server. Los clientes solo reciben el resultado
-        // vía NetworkTransform (posición) y networkSpeed (animación).
+        // via NetworkTransform (posicion) y networkSpeed (animacion).
         if (!IsServer) return;
 
         RefreshNearestPlayer();
@@ -63,11 +63,34 @@ public class Ai : NetworkBehaviour
 
     void Update()
     {
-        // La animación se actualiza en TODOS los clientes, leyendo el valor sincronizado.
-        animator.SetFloat("speed", networkSpeed.Value);
+        // Si la partida termino, detener animacion y navegacion
+        if (GameManager.Instance != null && GameManager.Instance.IsMatchOver)
+        {
+            if (IsServer)
+            {
+                if (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
+                {
+                    navMeshAgent.isStopped = true;
+                    navMeshAgent.velocity = Vector3.zero;
+                }
+                networkSpeed.Value = 0f;
+            }
 
-        // Toda la lógica de decisión (pathfinding, búsqueda de jugador, etc.)
-        // corre únicamente en el server.
+            if (animator != null)
+            {
+                animator.SetFloat("speed", 0f);
+            }
+            return;
+        }
+
+        // La animacion se actualiza en TODOS los clientes, leyendo el valor sincronizado.
+        if (animator != null)
+        {
+            animator.SetFloat("speed", networkSpeed.Value);
+        }
+
+        // Toda la logica de decision (pathfinding, busqueda de jugador, etc.)
+        // corre unicamente en el server.
         if (!IsServer) return;
 
         if (playerHealth != null && playerHealth.IsDead())
@@ -75,7 +98,7 @@ public class Ai : NetworkBehaviour
             player = null;
             playerHealth = null;
         }
-        float speed = navMeshAgent.velocity.magnitude;
+        float speed = (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh) ? navMeshAgent.velocity.magnitude : 0f;
         networkSpeed.Value = speed;
 
         playerSearchTimer -= Time.deltaTime;
@@ -111,16 +134,16 @@ public class Ai : NetworkBehaviour
     private void RefreshNearestPlayer()
     {
         PlayerMovementCC[] allPlayers = FindObjectsByType<PlayerMovementCC>(
-        FindObjectsSortMode.None
-    );
+            FindObjectsSortMode.None
+        );
         Transform nearest = null;
         PlayerHealth nearestHealth = null;
         float nearestDist = Mathf.Infinity;
         foreach (var p in allPlayers)
         {
+            if (p == null) continue;
             PlayerHealth health = p.GetComponent<PlayerHealth>();
             if (health != null && health.IsDead()) continue;
-            if (p == null) continue;
             float dist = Vector3.Distance(transform.position, p.transform.position);
             if (dist < nearestDist)
             {
@@ -133,13 +156,15 @@ public class Ai : NetworkBehaviour
         playerHealth = nearestHealth;
     }
 
-
     public void FollowPlayer()
     {
         if (player == null) return;
         if (Vector3.Distance(player.position, lastPlayerPosition) > repathThreshold)
         {
-            navMeshAgent.destination = player.position;
+            if (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
+            {
+                navMeshAgent.destination = player.position;
+            }
             lastPlayerPosition = player.position;
         }
     }
@@ -147,6 +172,9 @@ public class Ai : NetworkBehaviour
     public void GoToDestination()
     {
         if (destination1 == null) return;
-        navMeshAgent.destination = destination1.transform.position;
+        if (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
+        {
+            navMeshAgent.destination = destination1.transform.position;
+        }
     }
 }

@@ -1,3 +1,4 @@
+ï»¿using System;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Components; // para NetworkAnimator
@@ -24,6 +25,8 @@ public class EnemyHealth : NetworkBehaviour
     public AudioClip hitSound;
     public AudioClip deathSound;
 
+    public static event Action OnEnemyDied;
+
     private NetworkVariable<bool> isDeadNet = new NetworkVariable<bool>(
         false,
         NetworkVariableReadPermission.Everyone,
@@ -42,10 +45,6 @@ public class EnemyHealth : NetworkBehaviour
             networkAnimator = GetComponent<NetworkAnimator>();
     }
 
-    // Llamar solo desde código que ya corre en el server (por ejemplo
-    // EnemyCombat.DealDamage, que ya está gateado con IsServer).
-    // Si en el futuro el daño se origina en un cliente (ej. arma de jugador),
-    // ese script necesita un [ServerRpc] que llame a esto, nunca llamarlo directo desde un cliente.
     public void TakeDamage(float amount)
     {
         if (!IsServer) return;
@@ -56,12 +55,11 @@ public class EnemyHealth : NetworkBehaviour
         if (networkAnimator != null)
             networkAnimator.SetTrigger("hit");
         if (animator != null)
-            animator.SetTrigger("hit"); // NetworkAnimator lo replica a los clientes
-        if (IsServer)
+            animator.SetTrigger("hit");
+        if (IsServer && audioSource != null && hitSound != null)
         {
             audioSource.PlayOneShot(hitSound);
         }
-
 
         if (currentHealth.Value <= 0)
         {
@@ -74,12 +72,14 @@ public class EnemyHealth : NetworkBehaviour
         if (!IsServer) return;
         isDeadNet.Value = true;
 
+        OnEnemyDied?.Invoke();
+
         if (networkAnimator != null)
             networkAnimator.SetTrigger("die");
         if (animator != null)
             animator.SetTrigger("die");
 
-        if (IsServer)
+        if (IsServer && audioSource != null && deathSound != null)
         {
             audioSource.PlayOneShot(deathSound);
         }
@@ -95,12 +95,9 @@ public class EnemyHealth : NetworkBehaviour
 
         if (deathEffect != null)
         {
-            // Si deathEffect necesita verse en todos los clientes, spawnealo como
-            // NetworkObject en vez de Instantiate local, o disparalo vía ClientRpc.
             Instantiate(deathEffect, transform.position, Quaternion.identity);
         }
 
-        // Despawnea en la red (destruye en todos los clientes). true = también destruye el GameObject.
         Invoke(nameof(DespawnSelf), destroyDelay);
     }
 
