@@ -12,8 +12,10 @@ public class GameManager : NetworkBehaviour
     public float matchDuration = 120f; // 2 minutos
 
     [Header("--------Config--------")]
+    [Tooltip("Si es true, vuelve automáticamente al menú tras el retraso configurado. Si es false, los jugadores usan los botones de la pantalla de fin de partida.")]
+    [SerializeField] private bool autoReturnToMenu = false;
     [SerializeField] private float returnToMenuDelay = 3f;
-    [SerializeField] private string menuSceneName = "MainMenu";
+    [SerializeField] private string menuSceneName = "menuPrincipal";
 
     private NetworkVariable<float> networkTimeRemaining = new NetworkVariable<float>(
         0f,
@@ -130,14 +132,14 @@ public class GameManager : NetworkBehaviour
     {
         if (networkMatchState.Value != 0) return;
         networkMatchState.Value = 1;
-        StartCoroutine(EndMatchRoutine());
+        if (autoReturnToMenu) StartCoroutine(EndMatchRoutine());
     }
 
     private void Lose()
     {
         if (networkMatchState.Value != 0) return;
         networkMatchState.Value = 2;
-        StartCoroutine(EndMatchRoutine());
+        if (autoReturnToMenu) StartCoroutine(EndMatchRoutine());
     }
 
     // Server-only: espera y luego manda a TODOS los clientes conectados al menu
