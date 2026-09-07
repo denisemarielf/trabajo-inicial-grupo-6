@@ -9,6 +9,8 @@ public class WeaponSwitcher : NetworkBehaviour
     public AudioClip switchSound;
     private Shoot currentWeaponShoot;
     public AmmoUI ammoUI;
+    private PlayerHealth playerHealth;
+    private bool wasDead = false;
 
     private NetworkVariable<int> networkWeaponIndex = new NetworkVariable<int>(
         -1,
@@ -20,6 +22,7 @@ public class WeaponSwitcher : NetworkBehaviour
     {
         // Aseguramos que TODOS los GameObjects de arma esten activos siempre,
         // sin importar en que estado haya quedado guardado el prefab.
+        playerHealth = GetComponentInParent<PlayerHealth>();
         foreach (var weapon in weapons)
         {
             if (weapon != null) weapon.SetActive(true);
@@ -48,6 +51,22 @@ public class WeaponSwitcher : NetworkBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (!IsOwner) return;
+        if (playerHealth == null) return;
+
+        bool isDead = playerHealth.IsDead();
+
+        // Apenas detecto que acabo de morir, enfundo el arma automáticamente
+        // (mismo comportamiento que OnSelectWeapon1 -> SelectWeapon(-1)).
+        if (isDead && !wasDead)
+        {
+            SelectWeapon(-1);
+        }
+
+        wasDead = isDead;
+    }
     private void SetLayerRecursively(GameObject obj, int layer)
     {
         obj.layer = layer;
@@ -104,12 +123,14 @@ public class WeaponSwitcher : NetworkBehaviour
 
     public void OnSelectWeapon2(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.IsDead()) return;
         if (IsOwner && context.performed)
             SelectWeapon(0);
     }
 
     public void OnSelectWeapon3(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.IsDead()) return;
         if (IsOwner && context.performed)
             SelectWeapon(1);
     }
