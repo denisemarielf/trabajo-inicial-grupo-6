@@ -8,6 +8,7 @@ public class Ai : NetworkBehaviour
     public GameObject destination1;
     [Header("--------Follow Header--------")]
     private Transform player; // el jugador vivo más cercano en este momento (puede ser null)
+    private PlayerHealth playerHealth;
     public bool followPlayer;
     private float distanceToPlayer;
     private float distanceToFollowPlayer = 20;
@@ -69,6 +70,11 @@ public class Ai : NetworkBehaviour
         // corre únicamente en el server.
         if (!IsServer) return;
 
+        if (playerHealth != null && playerHealth.IsDead())
+        {
+            player = null;
+            playerHealth = null;
+        }
         float speed = navMeshAgent.velocity.magnitude;
         networkSpeed.Value = speed;
 
@@ -104,21 +110,29 @@ public class Ai : NetworkBehaviour
 
     private void RefreshNearestPlayer()
     {
-        PlayerMovementCC[] allPlayers = FindObjectsByType<PlayerMovementCC>(FindObjectsSortMode.None);
+        PlayerMovementCC[] allPlayers = FindObjectsByType<PlayerMovementCC>(
+        FindObjectsSortMode.None
+    );
         Transform nearest = null;
+        PlayerHealth nearestHealth = null;
         float nearestDist = Mathf.Infinity;
         foreach (var p in allPlayers)
         {
+            PlayerHealth health = p.GetComponent<PlayerHealth>();
+            if (health != null && health.IsDead()) continue;
             if (p == null) continue;
             float dist = Vector3.Distance(transform.position, p.transform.position);
             if (dist < nearestDist)
             {
                 nearestDist = dist;
                 nearest = p.transform;
+                nearestHealth = health;
             }
         }
         player = nearest;
+        playerHealth = nearestHealth;
     }
+
 
     public void FollowPlayer()
     {
