@@ -77,8 +77,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: lMultiplayerAD::PowerUp
   ShowTopMostFoldoutHeaderGroup: 1
   type: 3
-  amount: 70
-  duration: 0
+  amount: 3
+  duration: 5
   respawnTime: 15
   pickupSound: {fileID: 8300000, guid: 397fd422ad1207c4195b9c35b8fa6a67, type: 3}
 --- !u!23 &-2772582073501930484
