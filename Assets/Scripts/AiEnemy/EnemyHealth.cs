@@ -18,8 +18,10 @@ public class EnemyHealth : NetworkBehaviour
     [Header("--------Referencias--------")]
     private Animator animator;
     private NetworkAnimator networkAnimator;
+    private Ai ai;
     public GameObject deathEffect;
     public float destroyDelay = 3f;
+
     [Header("--------Audio--------")]
     public AudioSource audioSource;
     public AudioClip hitSound;
@@ -43,19 +45,29 @@ public class EnemyHealth : NetworkBehaviour
         networkAnimator = GetComponentInChildren<NetworkAnimator>();
         if (networkAnimator == null)
             networkAnimator = GetComponent<NetworkAnimator>();
+        ai = GetComponent<Ai>();
     }
 
-    public void TakeDamage(float amount)
+    // "attacker" es opcional: si quien llama no lo pasa, el enemigo se dana igual
+    // pero no se genera aggro (compatibilidad con llamados viejos sin romper nada).
+    public void TakeDamage(float amount, Transform attacker = null)
     {
         if (!IsServer) return;
         if (isDeadNet.Value) return;
 
         currentHealth.Value -= amount;
 
+        // Marca a quien pego como blanco prioritario por un rato
+        if (attacker != null && ai != null)
+        {
+            ai.SetAggroTarget(attacker);
+        }
+
         if (networkAnimator != null)
             networkAnimator.SetTrigger("hit");
         if (animator != null)
             animator.SetTrigger("hit");
+
         if (IsServer && audioSource != null && hitSound != null)
         {
             audioSource.PlayOneShot(hitSound);
@@ -70,8 +82,8 @@ public class EnemyHealth : NetworkBehaviour
     private void Die()
     {
         if (!IsServer) return;
-        isDeadNet.Value = true;
 
+        isDeadNet.Value = true;
         OnEnemyDied?.Invoke();
 
         if (networkAnimator != null)
@@ -84,8 +96,8 @@ public class EnemyHealth : NetworkBehaviour
             audioSource.PlayOneShot(deathSound);
         }
 
-        var ai = GetComponent<Ai>();
-        if (ai != null) ai.enabled = false;
+        var aiComp = GetComponent<Ai>();
+        if (aiComp != null) aiComp.enabled = false;
 
         var agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
         if (agent != null) agent.enabled = false;

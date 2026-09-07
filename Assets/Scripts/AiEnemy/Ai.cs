@@ -6,21 +6,32 @@ public class Ai : NetworkBehaviour
 {
     public NavMeshAgent navMeshAgent;
     public GameObject destination1;
+
     [Header("--------Follow Header--------")]
     private Transform player; // el jugador vivo mas cercano en este momento (puede ser null)
     private PlayerHealth playerHealth;
     public bool followPlayer;
     private float distanceToPlayer;
-    private float distanceToFollowPlayer = 20;
+    [SerializeField] private float distanceToFollowPlayer = 30f;  // para EMPEZAR a seguir
+    [SerializeField] private float distanceToLosePlayer = 40f;    // para DEJAR de seguir (mas grande = mas persistente)
     private Animator animator;
+
     [Header("--------Combat Header--------")]
     private EnemyCombat enemyCombat;
     private Vector3 lastPlayerPosition;
     private float repathThreshold = 0.5f;
     private bool isFollowingPlayer;
+
     [Header("--------Player Search--------")]
-    private float playerSearchInterval = 0.5f; // cada cuanto rebusca al jugador mas cercano
+    private float playerSearchInterval = 0.25f; // cada cuanto rebusca al jugador mas cercano
     private float playerSearchTimer = 0f;
+
+    [Header("--------Aggro (dano recibido)--------")]
+    [SerializeField] private float aggroDuration = 6f; // cuanto tiempo prioriza a quien le pego
+    private Transform aggroTarget;
+    private PlayerHealth aggroTargetHealth;
+    private float aggroTimer = 0f;
+
     public Transform CurrentPlayer => player;
 
     // Sincroniza la velocidad para que la animacion se vea bien en TODOS los clientes,
@@ -93,21 +104,47 @@ public class Ai : NetworkBehaviour
         // corre unicamente en el server.
         if (!IsServer) return;
 
+        // Cuenta regresiva del aggro por dano
+        if (aggroTimer > 0f)
+        {
+            aggroTimer -= Time.deltaTime;
+
+            // Si el jugador que genero el aggro murio, se cancela el aggro
+            if (aggroTargetHealth != null && aggroTargetHealth.IsDead())
+            {
+                ClearAggro();
+            }
+        }
+        else if (aggroTarget != null)
+        {
+            ClearAggro();
+        }
+
         if (playerHealth != null && playerHealth.IsDead())
         {
             player = null;
             playerHealth = null;
         }
+
         float speed = (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh) ? navMeshAgent.velocity.magnitude : 0f;
         networkSpeed.Value = speed;
 
-        playerSearchTimer -= Time.deltaTime;
-        if (playerSearchTimer <= 0f)
+        // Mientras haya aggro activo, NO se rebusca al jugador mas cercano:
+        // el enemigo se queda enfocado en quien le pego.
+        if (aggroTimer <= 0f)
         {
-            RefreshNearestPlayer();
-            playerSearchTimer = playerSearchInterval;
+            playerSearchTimer -= Time.deltaTime;
+            if (playerSearchTimer <= 0f)
+            {
+                RefreshNearestPlayer();
+                playerSearchTimer = playerSearchInterval;
+            }
         }
-        if (player == null)
+
+        // El target efectivo es el de aggro si esta activo, sino el mas cercano normal
+        Transform effectiveTarget = (aggroTimer > 0f && aggroTarget != null) ? aggroTarget : player;
+
+        if (effectiveTarget == null)
         {
             if (isFollowingPlayer)
             {
@@ -116,12 +153,20 @@ public class Ai : NetworkBehaviour
             }
             return;
         }
-        distanceToPlayer = Vector3.Distance(transform.position, player.position);
+
+        distanceToPlayer = Vector3.Distance(transform.position, effectiveTarget.position);
         bool isInAttackRange = enemyCombat != null && distanceToPlayer <= enemyCombat.attackRange;
-        bool shouldFollowPlayer = distanceToPlayer < distanceToFollowPlayer && followPlayer && !isInAttackRange;
+
+        // Con aggro activo, el rango de seguimiento no importa: persigue igual.
+        bool withinFollowRange = isFollowingPlayer
+            ? distanceToPlayer < distanceToLosePlayer
+            : distanceToPlayer < distanceToFollowPlayer;
+
+        bool shouldFollowPlayer = (aggroTimer > 0f || withinFollowRange) && followPlayer && !isInAttackRange;
+
         if (shouldFollowPlayer)
         {
-            FollowPlayer();
+            FollowTarget(effectiveTarget);
             isFollowingPlayer = true;
         }
         else if (isFollowingPlayer)
@@ -129,6 +174,23 @@ public class Ai : NetworkBehaviour
             GoToDestination();
             isFollowingPlayer = false;
         }
+    }
+
+    // Llamado desde EnemyHealth.TakeDamage cuando un jugador le pega a este enemigo.
+    public void SetAggroTarget(Transform attacker)
+    {
+        if (attacker == null) return;
+
+        aggroTarget = attacker;
+        aggroTargetHealth = attacker.GetComponent<PlayerHealth>();
+        aggroTimer = aggroDuration;
+    }
+
+    private void ClearAggro()
+    {
+        aggroTarget = null;
+        aggroTargetHealth = null;
+        aggroTimer = 0f;
     }
 
     private void RefreshNearestPlayer()
@@ -156,17 +218,23 @@ public class Ai : NetworkBehaviour
         playerHealth = nearestHealth;
     }
 
-    public void FollowPlayer()
+    public void FollowTarget(Transform target)
     {
-        if (player == null) return;
-        if (Vector3.Distance(player.position, lastPlayerPosition) > repathThreshold)
+        if (target == null) return;
+        if (Vector3.Distance(target.position, lastPlayerPosition) > repathThreshold)
         {
             if (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
             {
-                navMeshAgent.destination = player.position;
+                navMeshAgent.destination = target.position;
             }
-            lastPlayerPosition = player.position;
+            lastPlayerPosition = target.position;
         }
+    }
+
+    // Mantenido por compatibilidad si algo mas lo llamaba directo
+    public void FollowPlayer()
+    {
+        FollowTarget(player);
     }
 
     public void GoToDestination()

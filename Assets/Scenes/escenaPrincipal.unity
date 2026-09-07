@@ -506,6 +506,9 @@ MonoBehaviour:
   navMeshAgent: {fileID: 115452120}
   destination1: {fileID: 55837498}
   followPlayer: 0
+  distanceToFollowPlayer: 30
+  distanceToLosePlayer: 40
+  aggroDuration: 6
 --- !u!195 &115452120
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1786,6 +1789,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9f23992f14d8a542b621efab7775dee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: lMultiplayerAD::PersonalLosePanel
+  visibleDuration: 3
 --- !u!114 &538444318
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4362,12 +4366,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: lMultiplayerAD::GameManager
   ShowTopMostFoldoutHeaderGroup: 1
   matchDuration: 120
+  autoReturnToMenu: 0
   returnToMenuDelay: 3
   menuSceneName: menuPrincipal
   timerText: {fileID: 1736296376}
   winPanel: {fileID: 1214786760}
   losePanel: {fileID: 1716949818}
-  enemiesToSpawn: 3
+  enemiesToSpawn: 4
   waveInterval: 40
 --- !u!1001 &1268469592
 PrefabInstance:
@@ -5370,6 +5375,10 @@ PrefabInstance:
       propertyPath: amount
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7328875849603493897, guid: 23339709cf558dc4b9d7521bfb3d2923, type: 3}
+      propertyPath: respawnTime
+      value: 25
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6365,7 +6374,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1819212298331840358, guid: e3511bf65a4212c448fc8e0dd3e639b1, type: 3}
       propertyPath: duration
-      value: 30
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4798254162374589173, guid: e3511bf65a4212c448fc8e0dd3e639b1, type: 3}
       propertyPath: m_InScenePlaced
@@ -6677,7 +6686,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1478142864409718512, guid: 1661ea78ca3c74246b7352971bdeaa10, type: 3}
       propertyPath: attackRange
-      value: 5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1478142864409718512, guid: 1661ea78ca3c74246b7352971bdeaa10, type: 3}
       propertyPath: attackDamage
@@ -6685,7 +6694,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1478142864409718512, guid: 1661ea78ca3c74246b7352971bdeaa10, type: 3}
       propertyPath: attackCooldown
-      value: 1
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3544512308622177344, guid: 1661ea78ca3c74246b7352971bdeaa10, type: 3}
       propertyPath: m_Name

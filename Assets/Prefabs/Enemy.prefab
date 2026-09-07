@@ -966,7 +966,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 6
+  m_Speed: 8
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -1021,6 +1021,9 @@ MonoBehaviour:
   navMeshAgent: {fileID: 398339243109788569}
   destination1: {fileID: 9162208549164190252, guid: bae5cb0d1edb22e4aa9ee9260bc6c970, type: 3}
   followPlayer: 1
+  distanceToFollowPlayer: 30
+  distanceToLosePlayer: 40
+  aggroDuration: 6
 --- !u!114 &1478142864409718512
 MonoBehaviour:
   m_ObjectHideFlags: 0

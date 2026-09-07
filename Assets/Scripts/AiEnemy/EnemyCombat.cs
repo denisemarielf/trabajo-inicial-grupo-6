@@ -6,9 +6,9 @@ using Unity.Netcode.Components; // para NetworkAnimator
 public class EnemyCombat : NetworkBehaviour
 {
     [Header("--------Ataque--------")]
-    public float attackDamage = 10f;
-    public float attackRange = 2f;
-    public float attackCooldown = 1.5f;
+    public float attackDamage = 15f;
+    public float attackRange = 2.5f;
+    public float attackCooldown = 0.8f;
     private float lastAttackTime;
     [Header("--------Referencias--------")]
     private Animator animator;
