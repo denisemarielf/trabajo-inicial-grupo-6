@@ -10,7 +10,7 @@ public class PlayerMovementCC : NetworkBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
     [Header("Jump")]
-    [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private float jumpHeight = 3.5f;
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController controller;
