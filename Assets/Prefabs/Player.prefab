@@ -915,6 +915,8 @@ MonoBehaviour:
   audioSource: {fileID: 759595791636130581}
   damageSound: {fileID: 8300000, guid: 4a01b36d63c1b6f48bbf10ecb7bb36a2, type: 3}
   deathSound: {fileID: 8300000, guid: 89fda48e4018e8145bc0ff7bde92b0c2, type: 3}
+  returnToMenuDelay: 3
+  menuSceneName: menuPrincipal
 --- !u!82 &759595791636130581
 AudioSource:
   m_ObjectHideFlags: 0

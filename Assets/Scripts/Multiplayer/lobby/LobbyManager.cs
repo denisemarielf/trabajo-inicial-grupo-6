@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.Netcode;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Lobbies;
@@ -36,6 +37,36 @@ public class LobbyManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         await InitializeUnityServices();
+
+        StartCoroutine(SuscribirseADesconexionCuandoExista());
+    }
+
+    private System.Collections.IEnumerator SuscribirseADesconexionCuandoExista()
+    {
+        // NetworkManager puede tardar un frame en existir segun el orden de carga
+        while (NetworkManager.Singleton == null)
+            yield return null;
+
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+    }
+
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        // Solo actuamos si el que se desconecto soy YO MISMO
+        // (perdi la conexion con el Host, o el Host cerro la partida).
+        if (NetworkManager.Singleton == null) return;
+        if (clientId != NetworkManager.Singleton.LocalClientId) return;
+
+        Debug.Log("[LobbyManager] Se perdio la conexion con el Host. Volviendo al menu.");
+
+        LimpiarLobbyLocal();
+        SceneManager.LoadScene("menuPrincipal");
     }
 
     private async Task InitializeUnityServices()
@@ -101,24 +132,24 @@ public class LobbyManager : MonoBehaviour
                 return;
 
             currentLobby = lobbyActualizado;
-            
 
-Debug.Log(
-    "CLIENTE - PartidaIniciada recibido: " +
-    PartidaIniciada
-);
 
-if (currentLobby.Data != null)
-{
-    foreach (var dato in currentLobby.Data)
-    {
-        Debug.Log(
-            "CLIENTE - DATO LOBBY: " +
-            dato.Key + " = " +
-            dato.Value.Value
-        );
-    }
-}
+            Debug.Log(
+                "CLIENTE - PartidaIniciada recibido: " +
+                PartidaIniciada
+            );
+
+            if (currentLobby.Data != null)
+            {
+                foreach (var dato in currentLobby.Data)
+                {
+                    Debug.Log(
+                        "CLIENTE - DATO LOBBY: " +
+                        dato.Key + " = " +
+                        dato.Value.Value
+                    );
+                }
+            }
             Debug.Log(
                 "Lobby actualizado. Jugadores: " +
                 currentLobby.Players.Count
@@ -143,70 +174,70 @@ if (currentLobby.Data != null)
     }
 
 
-public async void CrearLobby()
-{
-    try
+    public async void CrearLobby()
     {
-        if (!AuthenticationService.Instance.IsSignedIn)
+        try
+        {
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                Debug.LogError(
+                    "El jugador no está autenticado."
+                );
+                return;
+            }
+
+            CreateLobbyOptions options =
+                new CreateLobbyOptions
+                {
+                    IsPrivate = false
+                };
+
+            currentLobby =
+                await LobbyService.Instance.CreateLobbyAsync(
+                    "Partida",
+                    4,
+                    options
+                );
+
+            lobbyActivo = true;
+
+            // PRUEBA DE DIAGNÓSTICO
+            Debug.Log(
+                "NUEVO LOBBY CREADO - ID: " +
+                currentLobby.Id
+            );
+
+            Debug.Log(
+                "NUEVO LOBBY CODE: " +
+                currentLobby.LobbyCode
+            );
+
+            Debug.Log(
+                "CREAR LOBBY - INSTANCE ID: " +
+                GetEntityId()
+            );
+
+            Debug.Log(
+                "CREAR LOBBY - INSTANCE: " +
+                gameObject.name
+            );
+
+            LobbyCode = currentLobby.LobbyCode;
+
+            Debug.Log("Lobby creado.");
+            Debug.Log(
+                "Código del Lobby: " + LobbyCode
+            );
+
+            SceneManager.LoadScene("salaEspera");
+        }
+        catch (System.Exception e)
         {
             Debug.LogError(
-                "El jugador no está autenticado."
+                "Error creando Lobby: " + e
             );
-            return;
         }
-
-        CreateLobbyOptions options =
-            new CreateLobbyOptions
-            {
-                IsPrivate = false
-            };
-
-        currentLobby =
-            await LobbyService.Instance.CreateLobbyAsync(
-                "Partida",
-                4,
-                options
-            );
-
-        lobbyActivo = true;
-
-        // PRUEBA DE DIAGNÓSTICO
-        Debug.Log(
-            "NUEVO LOBBY CREADO - ID: " +
-            currentLobby.Id
-        );
-
-        Debug.Log(
-            "NUEVO LOBBY CODE: " +
-            currentLobby.LobbyCode
-        );
-
-        Debug.Log(
-            "CREAR LOBBY - INSTANCE ID: " +
-            GetEntityId()
-        );
-
-        Debug.Log(
-            "CREAR LOBBY - INSTANCE: " +
-            gameObject.name
-        );
-
-        LobbyCode = currentLobby.LobbyCode;
-
-        Debug.Log("Lobby creado.");
-        Debug.Log(
-            "Código del Lobby: " + LobbyCode
-        );
-
-        SceneManager.LoadScene("salaEspera");
     }
-    catch (System.Exception e)
-    {
-        Debug.LogError(
-            "Error creando Lobby: " + e
-        );
-    }
-}
 
 
     public async void UnirseLobby(string codigo)
