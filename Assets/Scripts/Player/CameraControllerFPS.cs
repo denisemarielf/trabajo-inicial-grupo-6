@@ -1,4 +1,4 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,21 +24,42 @@ public class CameraControllerFPS : NetworkBehaviour
         }
     }
 
+    public void ResetCamera()
+    {
+        xRotation = 0f;
+        transform.localRotation = Quaternion.identity;
+        if (weaponPivot != null)
+        {
+            weaponPivot.localRotation = Quaternion.identity;
+        }
+        if (IsOwner)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+
     void Update()
     {
         if (IsOwner)
         {
-            Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-            float mouseX = mouseDelta.x * sensitivity * Time.deltaTime;
-            float mouseY = mouseDelta.y * sensitivity * Time.deltaTime;
+            if (Mouse.current != null)
+            {
+                Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+                float mouseX = mouseDelta.x * sensitivity * Time.deltaTime;
+                float mouseY = mouseDelta.y * sensitivity * Time.deltaTime;
 
-            xRotation -= mouseY;
-            xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+                xRotation -= mouseY;
+                xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-            transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
-            transform.parent.Rotate(Vector3.up * mouseX);
+                transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                if (transform.parent != null)
+                {
+                    transform.parent.Rotate(Vector3.up * mouseX);
+                }
 
-            networkPitch.Value = xRotation;
+                networkPitch.Value = xRotation;
+            }
         }
 
         if (weaponPivot != null)
