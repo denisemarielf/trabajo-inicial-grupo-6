@@ -106,6 +106,13 @@ public class GameManager : NetworkBehaviour
     {
         if (newState == 1 && winPanel != null) winPanel.SetActive(true);
         if (newState == 2 && losePanel != null) losePanel.SetActive(true);
+
+        GameOverUI ui = GameOverUI.EnsureInstance();
+        if (ui != null)
+        {
+            if (newState == 1) ui.Show(true);
+            else if (newState == 2) ui.Show(false);
+        }
     }
 
 

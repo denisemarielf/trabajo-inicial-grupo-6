@@ -8,10 +8,11 @@ using Unity.Netcode;
 
 public enum MatchResultReason
 {
-    SurviveTime,        // Victoria: Sobrevivieron el tiempo límite
-    DefeatedAllEnemies, // Victoria: Mataron a todos los enemigos
-    OutOfLives,         // Derrota: Se quedaron sin vidas
-    TowerDestroyed      // Derrota: La torre fue destruida
+    None = -1,
+    SurviveTime = 0,        // Victoria: Sobrevivieron el tiempo límite
+    DefeatedAllEnemies = 1, // Victoria: Mataron a todos los enemigos
+    OutOfLives = 2,         // Derrota: Se quedaron sin vidas
+    TowerDestroyed = 3      // Derrota: La torre fue destruida
 }
 
 public class GameOverUI : MonoBehaviour
@@ -64,30 +65,52 @@ public class GameOverUI : MonoBehaviour
     private Coroutine animCoroutine;
     private Coroutine tickerCoroutine;
 
+    public static GameOverUI EnsureInstance()
+    {
+        if (Instance != null) return Instance;
+
+        string activeScene = SceneManager.GetActiveScene().name;
+        if (activeScene == "menuPrincipal") return null;
+
+        // Crear o reutilizar un Canvas dedicado exclusivo para GameOver con la máxima prioridad de orden
+        GameObject canvasGo = GameObject.Find("GameOverCanvas");
+        Canvas canvas = null;
+        if (canvasGo == null)
+        {
+            canvasGo = new GameObject("GameOverCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 999;
+
+            CanvasScaler scaler = canvasGo.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(800, 600);
+            scaler.matchWidthOrHeight = 0.5f;
+        }
+        else
+        {
+            canvas = canvasGo.GetComponent<Canvas>();
+        }
+
+        GameObject go = new GameObject("GameOverUI", typeof(RectTransform));
+        go.transform.SetParent(canvas.transform, false);
+        go.transform.SetAsLastSibling();
+
+        RectTransform rtGo = go.GetComponent<RectTransform>();
+        rtGo.anchorMin = Vector2.zero;
+        rtGo.anchorMax = Vector2.one;
+        rtGo.offsetMin = Vector2.zero;
+        rtGo.offsetMax = Vector2.zero;
+
+        var ui = go.AddComponent<GameOverUI>();
+        ui.EnsureUIBuilt();
+        return ui;
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
     {
-        string activeScene = SceneManager.GetActiveScene().name;
-        if (activeScene == "menuPrincipal") return;
-
-        if (Instance == null)
-        {
-            Canvas canvas = FindFirstObjectByType<Canvas>();
-            if (canvas == null)
-            {
-                GameObject canvasGo = new GameObject("HUD", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                canvas = canvasGo.GetComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                var scaler = canvasGo.GetComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
-            }
-
-            GameObject go = new GameObject("GameOverUI");
-            go.transform.SetParent(canvas.transform, false);
-            var ui = go.AddComponent<GameOverUI>();
-            ui.EnsureUIBuilt();
-        }
+        EnsureInstance();
     }
 
     private void Awake()
@@ -197,38 +220,54 @@ public class GameOverUI : MonoBehaviour
         Canvas canvas = GetComponentInParent<Canvas>();
         if (canvas == null)
         {
-            canvas = FindFirstObjectByType<Canvas>();
-            if (canvas == null)
+            GameObject canvasGo = GameObject.Find("GameOverCanvas");
+            if (canvasGo == null)
             {
-                GameObject canvasGo = new GameObject("HUD", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+                canvasGo = new GameObject("GameOverCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
                 canvas = canvasGo.GetComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                var scaler = canvasGo.GetComponent<CanvasScaler>();
+                canvas.sortingOrder = 999;
+
+                CanvasScaler scaler = canvasGo.GetComponent<CanvasScaler>();
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
+                scaler.referenceResolution = new Vector2(800, 600);
+                scaler.matchWidthOrHeight = 0.5f;
+            }
+            else
+            {
+                canvas = canvasGo.GetComponent<Canvas>();
             }
             transform.SetParent(canvas.transform, false);
         }
 
-        // 1. Panel de fondo 100% OPACO para tapar cualquier texto o artefacto del fondo
+        transform.SetAsLastSibling();
+
+        RectTransform rtThis = GetComponent<RectTransform>();
+        if (rtThis == null) rtThis = gameObject.AddComponent<RectTransform>();
+        rtThis.anchorMin = Vector2.zero;
+        rtThis.anchorMax = Vector2.one;
+        rtThis.offsetMin = Vector2.zero;
+        rtThis.offsetMax = Vector2.zero;
+
+        // 1. Panel de fondo que cubre la totalidad de la pantalla
         rootPanel = new GameObject("GameOverRootPanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
         rootPanel.transform.SetParent(transform, false);
         RectTransform rtRoot = rootPanel.GetComponent<RectTransform>();
         rtRoot.anchorMin = Vector2.zero;
         rtRoot.anchorMax = Vector2.one;
-        rtRoot.offsetMin = Vector2.zero;
-        rtRoot.offsetMax = Vector2.zero;
+        rtRoot.offsetMin = new Vector2(-1500, -1500);
+        rtRoot.offsetMax = new Vector2(1500, 1500);
         Image imgRoot = rootPanel.GetComponent<Image>();
-        imgRoot.color = new Color(0.04f, 0.05f, 0.07f, 1.0f); // Totalmente opaco
+        imgRoot.color = new Color(0.02f, 0.03f, 0.05f, 0.96f); // Totalmente oscuro y opaco para tapar el mundo 3D
         rootCanvasGroup = rootPanel.GetComponent<CanvasGroup>();
 
-        // 2. Tarjeta / Modal central sólida (520 x 320 px)
+        // 2. Tarjeta / Modal central sólida (560 x 350 px)
         GameObject cardGo = new GameObject("GameOverCard", typeof(RectTransform), typeof(Image));
         cardGo.transform.SetParent(rootPanel.transform, false);
         cardRect = cardGo.GetComponent<RectTransform>();
         cardRect.anchorMin = new Vector2(0.5f, 0.5f);
         cardRect.anchorMax = new Vector2(0.5f, 0.5f);
-        cardRect.sizeDelta = new Vector2(520, 320);
+        cardRect.sizeDelta = new Vector2(560, 350);
         cardRect.anchoredPosition = Vector2.zero;
         Image cardImg = cardGo.GetComponent<Image>();
         cardImg.color = new Color(0.08f, 0.10f, 0.14f, 1.0f); // Sólido, sin sangrado
@@ -317,8 +356,8 @@ public class GameOverUI : MonoBehaviour
         killsValueText.text = "ENEMIGOS ELIMINADOS: 0";
 
         // 6. Botones de Acción
-        btnPlayAgain = CrearBoton(cardGo.transform, "BtnPlayAgain", "JUGAR DE NUEVO", new Vector2(-120, -245), new Color(0.14f, 0.68f, 0.38f, 1f));
-        btnMainMenu = CrearBoton(cardGo.transform, "BtnMainMenu", "MENÚ PRINCIPAL", new Vector2(120, -245), new Color(0.20f, 0.24f, 0.32f, 1f));
+        btnPlayAgain = CrearBoton(cardGo.transform, "BtnPlayAgain", "JUGAR DE NUEVO", new Vector2(-125, -265), new Color(0.14f, 0.68f, 0.38f, 1f));
+        btnMainMenu = CrearBoton(cardGo.transform, "BtnMainMenu", "MENÚ PRINCIPAL", new Vector2(125, -265), new Color(0.20f, 0.24f, 0.32f, 1f));
 
         btnPlayAgain.onClick.AddListener(HandlePlayAgainClick);
         btnMainMenu.onClick.AddListener(HandleMainMenuClick);
@@ -333,7 +372,7 @@ public class GameOverUI : MonoBehaviour
         RectTransform rt = btnGo.GetComponent<RectTransform>();
         rt.anchorMin = new Vector2(0.5f, 1f);
         rt.anchorMax = new Vector2(0.5f, 1f);
-        rt.sizeDelta = new Vector2(210, 44);
+        rt.sizeDelta = new Vector2(220, 48);
         rt.anchoredPosition = pos;
 
         Image img = btnGo.GetComponent<Image>();
@@ -396,7 +435,7 @@ public class GameOverUI : MonoBehaviour
     public void Show(bool isVictory)
     {
         string defaultSubtitle = isVictory ? victorySurviveSubtitle : defeatOutOfLivesSubtitle;
-        DisplayUI(isVictory, defaultSubtitle, isVictory ? 22 : 8);
+        DisplayUI(isVictory, defaultSubtitle, -1);
     }
 
     public void Show(bool isVictory, int kills, int deaths)
@@ -407,18 +446,51 @@ public class GameOverUI : MonoBehaviour
 
     private void DisplayUI(bool isVictory, string subtitle, int kills)
     {
+        if (transform.parent != null && !transform.parent.gameObject.activeSelf)
+        {
+            transform.parent.gameObject.SetActive(true);
+        }
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+
         EnsureUIBuilt();
         isGameOverActive = true;
 
+        transform.SetAsLastSibling();
         if (rootPanel != null)
         {
+            rootPanel.transform.SetAsLastSibling();
             rootPanel.SetActive(true);
         }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        DesactivarCamarasJugador();
+        OcultarHudsDelJuego();
+        DesactivarControlesJugador();
+
+        // En multijugador, si somos cliente (no host), deshabilitar botón de reinicio o avisar
+        if (btnPlayAgain != null)
+        {
+            bool isClientOnly = (NetworkManager.Singleton != null &&
+                                 NetworkManager.Singleton.IsConnectedClient &&
+                                 !NetworkManager.Singleton.IsHost);
+
+            if (isClientOnly)
+            {
+                btnPlayAgain.interactable = false;
+                var tmp = btnPlayAgain.GetComponentInChildren<TextMeshProUGUI>();
+                if (tmp != null) tmp.text = "ESPERANDO AL HOST...";
+            }
+            else
+            {
+                btnPlayAgain.interactable = true;
+                var tmp = btnPlayAgain.GetComponentInChildren<TextMeshProUGUI>();
+                if (tmp != null) tmp.text = "JUGAR DE NUEVO";
+            }
+        }
 
         Color mainColor = isVictory ? victoryColor : defeatColor;
 
@@ -446,16 +518,30 @@ public class GameOverUI : MonoBehaviour
 
         if (killsValueText != null)
         {
+            if (killsValueText.transform.parent != null && killsValueText.transform.parent.name == "SingleStatPill")
+            {
+                killsValueText.transform.parent.gameObject.SetActive(kills >= 0);
+            }
             killsValueText.color = isVictory ? new Color(0.35f, 0.95f, 0.6f, 1f) : new Color(1f, 0.45f, 0.45f, 1f);
         }
 
-        // Animación de entrada suave
-        if (animCoroutine != null) StopCoroutine(animCoroutine);
-        animCoroutine = StartCoroutine(AnimateEntry());
+        // Animación de entrada suave y conteo de bajas
+        if (gameObject.activeInHierarchy)
+        {
+            if (animCoroutine != null) StopCoroutine(animCoroutine);
+            animCoroutine = StartCoroutine(AnimateEntry());
 
-        // Conteo suave de bajas
-        if (tickerCoroutine != null) StopCoroutine(tickerCoroutine);
-        tickerCoroutine = StartCoroutine(AnimateStatsTicker(kills));
+            if (kills >= 0)
+            {
+                if (tickerCoroutine != null) StopCoroutine(tickerCoroutine);
+                tickerCoroutine = StartCoroutine(AnimateStatsTicker(kills));
+            }
+        }
+        else
+        {
+            if (rootCanvasGroup != null) rootCanvasGroup.alpha = 1f;
+            if (kills >= 0 && killsValueText != null) killsValueText.text = $"ENEMIGOS ELIMINADOS: [ {kills} ]";
+        }
 
         OnGameOverShown?.Invoke();
     }
@@ -510,6 +596,63 @@ public class GameOverUI : MonoBehaviour
         }
     }
 
+    private void OcultarHudsDelJuego()
+    {
+        SafeHide(FindFirstObjectByType<PlayerHealthUI>());
+        SafeHide(FindFirstObjectByType<AmmoUI>());
+        SafeHide(FindFirstObjectByType<TowerUi>());
+        SafeHide(FindFirstObjectByType<sesionCodeUI>());
+
+        // Desactivar texto del temporizador si existe en la jerarquía
+        TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Exclude);
+        foreach (var t in texts)
+        {
+            if (t != null && t.gameObject != null && t.gameObject.name.ToLower().Contains("timer") && !t.transform.IsChildOf(transform))
+            {
+                t.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private void SafeHide(MonoBehaviour mb)
+    {
+        if (mb == null) return;
+        mb.enabled = false;
+        // Solo desactivar el GameObject si NO es un Canvas y NO es ancestro de GameOverUI
+        if (mb.GetComponent<Canvas>() == null && mb.gameObject != gameObject && !transform.IsChildOf(mb.transform))
+        {
+            mb.gameObject.SetActive(false);
+        }
+    }
+
+    private void DesactivarControlesJugador()
+    {
+        DesactivarCamarasJugador();
+
+        // Desactivar componentes de movimiento
+        PlayerMovementCC[] movements = FindObjectsByType<PlayerMovementCC>(FindObjectsInactive.Exclude);
+        foreach (var pm in movements)
+        {
+            if (pm != null) pm.enabled = false;
+        }
+
+        // Desactivar disparos y armas
+        Shoot[] shoots = FindObjectsByType<Shoot>(FindObjectsInactive.Exclude);
+        foreach (var sh in shoots)
+        {
+            if (sh != null) sh.enabled = false;
+        }
+
+        // Desactivar PlayerInput si el nuevo Input System está presente
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.PlayerInput[] inputs = FindObjectsByType<UnityEngine.InputSystem.PlayerInput>(FindObjectsInactive.Exclude);
+        foreach (var input in inputs)
+        {
+            if (input != null) input.DeactivateInput();
+        }
+#endif
+    }
+
     private void DesactivarCamarasJugador()
     {
         MonoBehaviour[] scripts = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
@@ -562,6 +705,11 @@ public class GameOverUI : MonoBehaviour
 
     private void CerrarRedYVolverAlMenu()
     {
+        if (LobbyManager.Instance != null)
+        {
+            LobbyManager.Instance.LimpiarLobbyLocal();
+        }
+
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
