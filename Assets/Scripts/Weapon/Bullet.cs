@@ -7,7 +7,7 @@ public class Bullet : NetworkBehaviour
     private bool hasHit = false;
     public ParticleSystem sparksImpact;
     public int damageAmount;
-    private Transform shooter; // NUEVO: quién disparó esta bala
+    private Transform shooter; // NUEVO: quiï¿½n disparï¿½ esta bala
 
     void Awake()
     {
@@ -23,8 +23,8 @@ public class Bullet : NetworkBehaviour
     {
         if (hasHit) return;
 
-        // Ignoramos el impacto contra el propio jugador que disparó,
-        // sin afectar la detección contra el resto del mundo/otros jugadores.
+        // Ignoramos el impacto contra el propio jugador que disparï¿½,
+        // sin afectar la detecciï¿½n contra el resto del mundo/otros jugadores.
         if (shooter != null && collision.transform.root == shooter.root)
             return;
 
@@ -86,4 +86,5 @@ public class Bullet : NetworkBehaviour
     {
         damageAmount = number;
     }
+
 }

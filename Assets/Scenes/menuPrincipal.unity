@@ -581,6 +581,7 @@ MonoBehaviour:
   statusText: {fileID: 0}
   audioSource: {fileID: 503445852}
   clickSound: {fileID: 8300000, guid: 700b5114664ac88429f9e4e01a920e4e, type: 3}
+  btnTutoriales: {fileID: 0}
   lobbyManager: {fileID: 1830361554}
 --- !u!82 &503445852
 AudioSource:

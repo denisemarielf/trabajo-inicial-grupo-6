@@ -1,0 +1,14 @@
+{
+    "name": "Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "lMultiplayerAD",
+        "Unity.Services.Core",
+        "Unity.Services.Authentication",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}
