@@ -98,19 +98,19 @@ public class WeaponSwitcher : NetworkBehaviour
 
     public void OnSelectWeapon1(InputAction.CallbackContext context)
     {
-        if (IsOwner && context.performed)
+        if (IsOwner && !EscapeMenu.IsOpen && context.performed)
             SelectWeapon(-1);
     }
 
     public void OnSelectWeapon2(InputAction.CallbackContext context)
     {
-        if (IsOwner && context.performed)
+        if (IsOwner && !EscapeMenu.IsOpen && context.performed)
             SelectWeapon(0);
     }
 
     public void OnSelectWeapon3(InputAction.CallbackContext context)
     {
-        if (IsOwner && context.performed)
+        if (IsOwner && !EscapeMenu.IsOpen && context.performed)
             SelectWeapon(1);
     }
 

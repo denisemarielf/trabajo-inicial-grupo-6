@@ -26,7 +26,7 @@ public class CameraControllerFPS : NetworkBehaviour
 
     void Update()
     {
-        if (IsOwner)
+        if (IsOwner && !EscapeMenu.IsOpen)
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
             float mouseX = mouseDelta.x * sensitivity * Time.deltaTime;

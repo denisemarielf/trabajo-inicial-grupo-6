@@ -1,8 +1,8 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using System.Collections;
+
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovementCC : NetworkBehaviour
@@ -25,7 +25,7 @@ public class PlayerMovementCC : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner)
+        if (!IsOwner || EscapeMenu.IsOpen)
             return;
 
         Move();
@@ -33,7 +33,7 @@ public class PlayerMovementCC : NetworkBehaviour
         ApplyGravity();
     }
 
-    // OnNetworkSpawn eliminado de ac� � esa responsabilidad ya la tiene PlayerCameraSetup.
+    // OnNetworkSpawn eliminado de acá — esa responsabilidad ya la tiene PlayerCameraSetup.
 
     public void OnMove(InputAction.CallbackContext context)
     {
@@ -48,11 +48,11 @@ public class PlayerMovementCC : NetworkBehaviour
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
-           // if (animator != null)
-             //   animator.SetTrigger("jump");
+            // if (animator != null)
+            //   animator.SetTrigger("jump");
         }
 
-        
+
     }
 
     private NetworkVariable<float> speedMultiplier = new NetworkVariable<float>(
@@ -97,30 +97,4 @@ public class PlayerMovementCC : NetworkBehaviour
         yield return new WaitForSeconds(duration);
         speedMultiplier.Value = 1f;
     }
-
-    public void OnDisconnect(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            Desconectar();
-        }
-    }
-private void Desconectar()
-{
-    if (NetworkManager.Singleton == null)
-        return;
-
-    NetworkManager.Singleton.StartCoroutine(
-        DesconectarYVolverAlMenu()
-    );
-}
-
-private System.Collections.IEnumerator DesconectarYVolverAlMenu()
-{
-    NetworkManager.Singleton.Shutdown();
-
-    yield return new WaitForSeconds(0.2f);
-
-    SceneManager.LoadScene("menuPrincipal");
-}
 }
