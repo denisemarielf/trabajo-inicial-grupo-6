@@ -658,7 +658,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementCC
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 15
-  jumpHeight: 3
+  jumpHeight: 4.5
   gravity: -9.81
   animator: {fileID: 6883054296343847072}
 --- !u!114 &4485689380598900013
@@ -915,6 +915,7 @@ MonoBehaviour:
   audioSource: {fileID: 759595791636130581}
   damageSound: {fileID: 8300000, guid: 4a01b36d63c1b6f48bbf10ecb7bb36a2, type: 3}
   deathSound: {fileID: 8300000, guid: 89fda48e4018e8145bc0ff7bde92b0c2, type: 3}
+  disconnectClientOnDeath: 0
   returnToMenuDelay: 3
   menuSceneName: menuPrincipal
 --- !u!82 &759595791636130581

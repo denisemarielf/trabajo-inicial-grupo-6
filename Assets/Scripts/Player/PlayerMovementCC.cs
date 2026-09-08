@@ -119,28 +119,5 @@ public class PlayerMovementCC : NetworkBehaviour
         speedMultiplier.Value = 1f;
     }
 
-    public void OnDisconnect(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            Desconectar();
-        }
-    }
-
-    private void Desconectar()
-    {
-        if (NetworkManager.Singleton == null)
-            return;
-
-        NetworkManager.Singleton.StartCoroutine(
-            DesconectarYVolverAlMenu()
-        );
-    }
-
-    private System.Collections.IEnumerator DesconectarYVolverAlMenu()
-    {
-        NetworkManager.Singleton.Shutdown();
-        yield return new WaitForSeconds(0.2f);
-        SceneManager.LoadScene("menuPrincipal");
-    }
+   
 }
