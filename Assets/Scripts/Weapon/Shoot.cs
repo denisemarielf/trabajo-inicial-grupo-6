@@ -39,7 +39,7 @@ public class Shoot : NetworkBehaviour
 
     public void OnShoot(InputAction.CallbackContext context)
     {
-        if (!IsOwner) return;
+        if (!IsOwner || EscapeMenu.IsOpen) return;
         if (context.performed && Time.time >= shootRateTime)
         {
             shootRateTime = Time.time + shootRate;
@@ -115,7 +115,7 @@ public class Shoot : NetworkBehaviour
 
     public void OnReload(InputAction.CallbackContext context)
     {
-        if (!IsOwner) return;
+        if (!IsOwner || EscapeMenu.IsOpen) return;
         if (context.performed) TryReload();
     }
 

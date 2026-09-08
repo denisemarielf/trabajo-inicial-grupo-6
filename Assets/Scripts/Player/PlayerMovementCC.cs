@@ -1,4 +1,4 @@
-﻿using Unity.Netcode;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -37,7 +37,7 @@ public class PlayerMovementCC : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner)
+        if (!IsOwner || EscapeMenu.IsOpen)
             return;
 
         // Si estoy muerto, no puedo moverme ni interactuar con el escenario.

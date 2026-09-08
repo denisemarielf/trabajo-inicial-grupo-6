@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
@@ -29,7 +29,7 @@ public class WeaponSwitcher : NetworkBehaviour
             if (weapon != null) weapon.SetActive(true);
         }
 
-        // NUEVO: asignamos la layer según sea mi arma o la de otro jugador.
+        // NUEVO: asignamos la layer segÃºn sea mi arma o la de otro jugador.
         int targetLayer = IsOwner
             ? LayerMask.NameToLayer("Weapon")
             : LayerMask.NameToLayer("Default");
@@ -59,7 +59,7 @@ public class WeaponSwitcher : NetworkBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // La escena vieja (y su AmmoUI) ya no existen; la referencia quedó
+        // La escena vieja (y su AmmoUI) ya no existen; la referencia quedÃ³
         // apuntando a un objeto destruido. Buscamos el AmmoUI de la escena nueva.
         ammoUI = null;
         StartCoroutine(BuscarAmmoUI());
@@ -72,7 +72,7 @@ public class WeaponSwitcher : NetworkBehaviour
 
         bool isDead = playerHealth.IsDead();
 
-        // Apenas detecto que acabo de morir, enfundo el arma automáticamente
+        // Apenas detecto que acabo de morir, enfundo el arma automÃ¡ticamente
         // (mismo comportamiento que OnSelectWeapon1 -> SelectWeapon(-1)).
         if (isDead && !wasDead)
         {
@@ -104,7 +104,7 @@ public class WeaponSwitcher : NetworkBehaviour
         }
 
         // Apenas lo encontramos, lo inicializamos con el arma actual
-        // (antes esto quedaba en blanco hasta el próximo cambio de arma).
+        // (antes esto quedaba en blanco hasta el prÃ³ximo cambio de arma).
         ammoUI.SetWeapon(currentWeaponShoot);
     }
 
@@ -140,21 +140,22 @@ public class WeaponSwitcher : NetworkBehaviour
 
     public void OnSelectWeapon1(InputAction.CallbackContext context)
     {
-        if (IsOwner && context.performed)
+        if (playerHealth != null && playerHealth.IsDead()) return;
+        if (IsOwner && !EscapeMenu.IsOpen && context.performed)
             SelectWeapon(-1);
     }
 
     public void OnSelectWeapon2(InputAction.CallbackContext context)
     {
         if (playerHealth != null && playerHealth.IsDead()) return;
-        if (IsOwner && context.performed)
+        if (IsOwner && !EscapeMenu.IsOpen && context.performed)
             SelectWeapon(0);
     }
 
     public void OnSelectWeapon3(InputAction.CallbackContext context)
     {
         if (playerHealth != null && playerHealth.IsDead()) return;
-        if (IsOwner && context.performed)
+        if (IsOwner && !EscapeMenu.IsOpen && context.performed)
             SelectWeapon(1);
     }
 
@@ -202,7 +203,7 @@ public class WeaponSwitcher : NetworkBehaviour
     [ClientRpc]
     private void GrantAmmoClientRpc(int amount)
     {
-        if (!IsOwner) return; // solo le importa al dueño de esta arma
+        if (!IsOwner) return; // solo le importa al dueÃ±o de esta arma
 
         foreach (var weapon in weapons)
         {

@@ -41,7 +41,7 @@ public class CameraControllerFPS : NetworkBehaviour
 
     void Update()
     {
-        if (IsOwner)
+        if (IsOwner && !EscapeMenu.IsOpen)
         {
             if (Mouse.current != null)
             {
