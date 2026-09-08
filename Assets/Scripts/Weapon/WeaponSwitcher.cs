@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using Unity.Netcode;
 
 public class WeaponSwitcher : NetworkBehaviour
@@ -43,12 +44,25 @@ public class WeaponSwitcher : NetworkBehaviour
         {
             StartCoroutine(BuscarAmmoUI());
             SelectWeapon(0);
+
+            // El jugador persiste entre reinicios de partida, pero la escena
+            // (y con ella el AmmoUI viejo) se destruye y se recrea. Cada vez
+            // que carga una escena nueva, volvemos a buscar el AmmoUI actual.
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
         {
             UpdateWeaponVisuals(networkWeaponIndex.Value);
             StartCoroutine(ReforzarVisualTrasSpawn());
         }
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // La escena vieja (y su AmmoUI) ya no existen; la referencia quedó
+        // apuntando a un objeto destruido. Buscamos el AmmoUI de la escena nueva.
+        ammoUI = null;
+        StartCoroutine(BuscarAmmoUI());
     }
 
     private void Update()
@@ -88,11 +102,20 @@ public class WeaponSwitcher : NetworkBehaviour
             ammoUI = FindAnyObjectByType<AmmoUI>();
             if (ammoUI == null) yield return null;
         }
+
+        // Apenas lo encontramos, lo inicializamos con el arma actual
+        // (antes esto quedaba en blanco hasta el próximo cambio de arma).
+        ammoUI.SetWeapon(currentWeaponShoot);
     }
 
     public override void OnNetworkDespawn()
     {
         networkWeaponIndex.OnValueChanged -= OnWeaponIndexChanged;
+
+        if (IsOwner)
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
     }
 
     private void OnWeaponIndexChanged(int oldIndex, int newIndex)

@@ -148,6 +148,11 @@ public class GameManager : NetworkBehaviour
             i++;
         }
         Debug.Log($"[GameManager] Jugadores reiniciados: {alivePlayers.Count} registrados.");
+
+        // Los jugadores (y sus armas) persisten entre reinicios, pero la pantalla
+        // de fin de partida anterior dejó Shoot/PlayerMovementCC deshabilitados
+        // en TODOS los clientes. Avisamos para que cada uno reactive sus controles.
+        ReactivarControlesClientRpc();
     }
 
     private void UpdateTimerUI(float time)
@@ -224,6 +229,20 @@ public class GameManager : NetworkBehaviour
         if (ui != null)
         {
             ui.Show((MatchResultReason)reasonInt, kills);
+        }
+    }
+
+    // Se llama una vez reseteados los jugadores tras un reinicio de partida.
+    // GameOverUI.Hide() ya hace exactamente lo que necesitamos: oculta el panel
+    // (por si quedó activo) y reactiva Shoot/PlayerMovementCC/cámara/input de
+    // TODOS los jugadores en ESTE cliente.
+    [ClientRpc]
+    private void ReactivarControlesClientRpc()
+    {
+        GameOverUI ui = GameOverUI.EnsureInstance();
+        if (ui != null)
+        {
+            ui.Hide();
         }
     }
 
