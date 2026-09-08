@@ -19,6 +19,7 @@ public class LobbyManager : MonoBehaviour
     public string LobbyCode { get; private set; }
 
     public bool PartidaIniciada { get; private set; } = false;
+    public event System.Action OnLobbyJoinAttemptFinished;
 
     private float tiempoActualizacion = 2f;
     private float tiempoTranscurrido = 0f;
@@ -201,7 +202,7 @@ public class LobbyManager : MonoBehaviour
 
             lobbyActivo = true;
 
-            // PRUEBA DE DIAGNÓSTICO
+        
             Debug.Log(
                 "NUEVO LOBBY CREADO - ID: " +
                 currentLobby.Id
@@ -240,41 +241,47 @@ public class LobbyManager : MonoBehaviour
     }
 
 
-    public async void UnirseLobby(string codigo)
+
+
+public async void UnirseLobby(string codigo)
+{
+    try
     {
-        try
-        {
-            if (!AuthenticationService.Instance.IsSignedIn)
-            {
-                Debug.LogError(
-                    "El jugador no está autenticado."
-                );
-                return;
-            }
-
-            currentLobby =
-                await LobbyService.Instance.JoinLobbyByCodeAsync(
-                    codigo
-                );
-
-            lobbyActivo = true;
-
-            LobbyCode = currentLobby.LobbyCode;
-
-            Debug.Log("Se unió al Lobby.");
-            Debug.Log(
-                "Código del Lobby: " + LobbyCode
-            );
-
-            SceneManager.LoadScene("salaEspera");
-        }
-        catch (System.Exception e)
+        if (!AuthenticationService.Instance.IsSignedIn)
         {
             Debug.LogError(
-                "Error uniéndose al Lobby: " + e
+                "El jugador no está autenticado."
             );
+            return;
         }
+
+        currentLobby =
+            await LobbyService.Instance.JoinLobbyByCodeAsync(
+                codigo
+            );
+
+        lobbyActivo = true;
+
+        LobbyCode = currentLobby.LobbyCode;
+
+        Debug.Log("Se unió al Lobby.");
+        Debug.Log(
+            "Código del Lobby: " + LobbyCode
+        );
+
+        SceneManager.LoadScene("salaEspera");
     }
+    catch (System.Exception e)
+    {
+        Debug.LogError(
+            "Error uniéndose al Lobby: " + e
+        );
+    }
+    finally
+    {
+        OnLobbyJoinAttemptFinished?.Invoke();
+    }
+}
 
     public string GetLobbyCode()
     {

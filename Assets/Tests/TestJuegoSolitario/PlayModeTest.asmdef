@@ -8,6 +8,8 @@
         "GameAssembly",
         "Unity.InputSystem.TestFramework",
         "lMultiplayerAD",
+        "Unity.Services.Core",
+        "Unity.Services.Authentication",
         "Unity.Netcode.Runtime"
     ],
     "includePlatforms": [],
