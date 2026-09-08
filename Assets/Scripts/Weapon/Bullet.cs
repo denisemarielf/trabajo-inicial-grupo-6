@@ -7,24 +7,33 @@ public class Bullet : NetworkBehaviour
     private bool hasHit = false;
     public ParticleSystem sparksImpact;
     public int damageAmount;
+    private Transform shooter; // NUEVO: qui�n dispar� esta bala
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
     }
 
+    public void SetShooter(Transform shooterTransform)
+    {
+        shooter = shooterTransform;
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (hasHit) return;
-        hasHit = true;
 
+        // Ignoramos el impacto contra el propio jugador que dispar�,
+        // sin afectar la detecci�n contra el resto del mundo/otros jugadores.
+        if (shooter != null && collision.transform.root == shooter.root)
+            return;
+
+        hasHit = true;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
-
         ContactPoint contact = collision.GetContact(0);
 
-        // En vez de instanciar localmente, avisamos a todos los clientes
         PlayImpactEffectClientRpc(contact.point, contact.normal);
 
         if (IsServer)
@@ -41,7 +50,6 @@ public class Bullet : NetworkBehaviour
             {
                 // collision.gameObject.GetComponent<PlayerHealth>()?.TakeDamage(damageAmount);
             }
-
             DespawnBullet();
         }
     }
@@ -73,8 +81,10 @@ public class Bullet : NetworkBehaviour
             Destroy(gameObject);
         }
     }
+
     public void setDamageAmount(int number)
     {
-        damageAmount=number;
+        damageAmount = number;
     }
+
 }

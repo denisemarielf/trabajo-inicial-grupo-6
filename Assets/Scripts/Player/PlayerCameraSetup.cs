@@ -1,14 +1,19 @@
-using Unity.Netcode;
+ï»¿using Unity.Netcode;
 using UnityEngine;
 
 public class PlayerCameraSetup : NetworkBehaviour
 {
-    [SerializeField] private GameObject characterModel; // arrastrá CharacterModel acá
+    [SerializeField] private GameObject characterModel;
 
     public override void OnNetworkSpawn()
     {
+        ApplyLayerSetup();
+    }
+
+    public void ApplyLayerSetup()
+    {
         Camera[] allCameras = GetComponentsInChildren<Camera>(true);
-        AudioListener listener = GetComponentInChildren<AudioListener>();
+        AudioListener listener = GetComponentInChildren<AudioListener>(true);
 
         foreach (Camera cam in allCameras)
         {

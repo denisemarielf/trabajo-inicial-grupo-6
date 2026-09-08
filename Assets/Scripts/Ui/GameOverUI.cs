@@ -8,10 +8,11 @@ using Unity.Netcode;
 
 public enum MatchResultReason
 {
-    SurviveTime,        // Victoria: Sobrevivieron el tiempo límite
-    DefeatedAllEnemies, // Victoria: Mataron a todos los enemigos
-    OutOfLives,         // Derrota: Se quedaron sin vidas
-    TowerDestroyed      // Derrota: La torre fue destruida
+    None = -1,
+    SurviveTime = 0,        // Victoria: Sobrevivieron el tiempo limite
+    DefeatedAllEnemies = 1, // Victoria: Mataron a todos los enemigos
+    OutOfLives = 2,         // Derrota: Se quedaron sin vidas
+    TowerDestroyed = 3      // Derrota: La torre fue destruida
 }
 
 public class GameOverUI : MonoBehaviour
@@ -41,19 +42,19 @@ public class GameOverUI : MonoBehaviour
     [SerializeField] private Color defeatColor = new Color(1.0f, 0.28f, 0.28f, 1f);
 
     [Header("Mensajes de Victoria")]
-    [SerializeField] private string victorySurviveSubtitle = "¡Han resistido todo el tiempo límite defendiendo la base!";
+    [SerializeField] private string victorySurviveSubtitle = "¡Han resistido todo el tiempo limite defendiendo la base!";
     [SerializeField] private string victoryAllEnemiesSubtitle = "¡Han eliminado a todas las oleadas de enemigos!";
 
     [Header("Mensajes de Derrota")]
-    [SerializeField] private string defeatOutOfLivesSubtitle = "Todos los defensores han caído en combate.";
+    [SerializeField] private string defeatOutOfLivesSubtitle = "Todos los defensores han caido en combate.";
     [SerializeField] private string defeatTowerDestroyedSubtitle = "La torre de defensa ha sido destruida.";
 
     [Header("Botones")]
     [SerializeField] private Button btnPlayAgain;
     [SerializeField] private Button btnMainMenu;
 
-    [Header("Configuración de Escenas")]
-    [Tooltip("Nombre de la escena del menú principal para volver")]
+    [Header("Configuracion de Escenas")]
+    [Tooltip("Nombre de la escena del menu principal para volver")]
     [SerializeField] private string mainMenuSceneName = "menuPrincipal";
 
     private bool isGameOverActive = false;
@@ -64,30 +65,79 @@ public class GameOverUI : MonoBehaviour
     private Coroutine animCoroutine;
     private Coroutine tickerCoroutine;
 
+    public static void EnsureEventSystemExists()
+    {
+        var existing = FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>(FindObjectsInactive.Include);
+        if (existing != null)
+        {
+            if (!existing.gameObject.activeSelf) existing.gameObject.SetActive(true);
+            if (!existing.enabled) existing.enabled = true;
+            return;
+        }
+
+        GameObject esGo = new GameObject("EventSystem");
+        esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
+
+#if ENABLE_INPUT_SYSTEM
+        var inputModule = esGo.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+        inputModule.AssignDefaultActions();
+#else
+        esGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+#endif
+        Debug.Log("[GameOverUI] EventSystem creado e inicializado con exito.");
+    }
+
+    public static GameOverUI EnsureInstance()
+    {
+        if (Instance != null) return Instance;
+
+        string activeScene = SceneManager.GetActiveScene().name;
+        if (activeScene == "menuPrincipal") return null;
+
+        EnsureEventSystemExists();
+
+        GameObject canvasGo = GameObject.Find("GameOverCanvas");
+        Canvas canvas = null;
+        if (canvasGo == null)
+        {
+            canvasGo = new GameObject("GameOverCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 999;
+
+            CanvasScaler scaler = canvasGo.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(800, 600);
+            scaler.matchWidthOrHeight = 0.5f;
+        }
+        else
+        {
+            canvas = canvasGo.GetComponent<Canvas>();
+        }
+
+        GameObject go = new GameObject("GameOverUI", typeof(RectTransform));
+        go.transform.SetParent(canvas.transform, false);
+        go.transform.SetAsLastSibling();
+
+        RectTransform rtGo = go.GetComponent<RectTransform>();
+        rtGo.anchorMin = Vector2.zero;
+        rtGo.anchorMax = Vector2.one;
+        rtGo.offsetMin = Vector2.zero;
+        rtGo.offsetMax = Vector2.zero;
+
+        var ui = go.AddComponent<GameOverUI>();
+        ui.EnsureUIBuilt();
+        return ui;
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
     {
         string activeScene = SceneManager.GetActiveScene().name;
         if (activeScene == "menuPrincipal") return;
 
-        if (Instance == null)
-        {
-            Canvas canvas = FindFirstObjectByType<Canvas>();
-            if (canvas == null)
-            {
-                GameObject canvasGo = new GameObject("HUD", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                canvas = canvasGo.GetComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                var scaler = canvasGo.GetComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
-            }
-
-            GameObject go = new GameObject("GameOverUI");
-            go.transform.SetParent(canvas.transform, false);
-            var ui = go.AddComponent<GameOverUI>();
-            ui.EnsureUIBuilt();
-        }
+        EnsureEventSystemExists();
+        EnsureInstance();
     }
 
     private void Awake()
@@ -99,7 +149,9 @@ public class GameOverUI : MonoBehaviour
         }
 
         Instance = this;
+        isGameOverActive = false;
 
+        EnsureEventSystemExists();
         EnsureUIBuilt();
 
         if (rootPanel != null)
@@ -187,53 +239,70 @@ public class GameOverUI : MonoBehaviour
         EnsureUIBuilt();
     }
 
-    /// <summary>
-    /// Construye una interfaz limpia, sólida y profesional (sin transparencias raras ni artefactos).
-    /// </summary>
     public void EnsureUIBuilt()
     {
         if (rootPanel != null) return;
 
+        EnsureEventSystemExists();
+
         Canvas canvas = GetComponentInParent<Canvas>();
         if (canvas == null)
         {
-            canvas = FindFirstObjectByType<Canvas>();
-            if (canvas == null)
+            GameObject canvasGo = GameObject.Find("GameOverCanvas");
+            if (canvasGo == null)
             {
-                GameObject canvasGo = new GameObject("HUD", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+                canvasGo = new GameObject("GameOverCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
                 canvas = canvasGo.GetComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                var scaler = canvasGo.GetComponent<CanvasScaler>();
+                canvas.sortingOrder = 999;
+
+                CanvasScaler scaler = canvasGo.GetComponent<CanvasScaler>();
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
+                scaler.referenceResolution = new Vector2(800, 600);
+                scaler.matchWidthOrHeight = 0.5f;
+            }
+            else
+            {
+                canvas = canvasGo.GetComponent<Canvas>();
             }
             transform.SetParent(canvas.transform, false);
         }
 
-        // 1. Panel de fondo 100% OPACO para tapar cualquier texto o artefacto del fondo
+        transform.SetAsLastSibling();
+
+        RectTransform rtThis = GetComponent<RectTransform>();
+        if (rtThis == null) rtThis = gameObject.AddComponent<RectTransform>();
+        rtThis.anchorMin = Vector2.zero;
+        rtThis.anchorMax = Vector2.one;
+        rtThis.offsetMin = Vector2.zero;
+        rtThis.offsetMax = Vector2.zero;
+
+        // 1. Panel de fondo que cubre la totalidad de la pantalla
         rootPanel = new GameObject("GameOverRootPanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
         rootPanel.transform.SetParent(transform, false);
         RectTransform rtRoot = rootPanel.GetComponent<RectTransform>();
         rtRoot.anchorMin = Vector2.zero;
         rtRoot.anchorMax = Vector2.one;
-        rtRoot.offsetMin = Vector2.zero;
-        rtRoot.offsetMax = Vector2.zero;
+        rtRoot.offsetMin = new Vector2(-1500, -1500);
+        rtRoot.offsetMax = new Vector2(1500, 1500);
         Image imgRoot = rootPanel.GetComponent<Image>();
-        imgRoot.color = new Color(0.04f, 0.05f, 0.07f, 1.0f); // Totalmente opaco
+        imgRoot.color = new Color(0.02f, 0.03f, 0.05f, 0.96f);
+        imgRoot.raycastTarget = true;
         rootCanvasGroup = rootPanel.GetComponent<CanvasGroup>();
 
-        // 2. Tarjeta / Modal central sólida (520 x 320 px)
+        // 2. Tarjeta / Modal central solida (560 x 350 px)
         GameObject cardGo = new GameObject("GameOverCard", typeof(RectTransform), typeof(Image));
         cardGo.transform.SetParent(rootPanel.transform, false);
         cardRect = cardGo.GetComponent<RectTransform>();
         cardRect.anchorMin = new Vector2(0.5f, 0.5f);
         cardRect.anchorMax = new Vector2(0.5f, 0.5f);
-        cardRect.sizeDelta = new Vector2(520, 320);
+        cardRect.sizeDelta = new Vector2(560, 350);
         cardRect.anchoredPosition = Vector2.zero;
         Image cardImg = cardGo.GetComponent<Image>();
-        cardImg.color = new Color(0.08f, 0.10f, 0.14f, 1.0f); // Sólido, sin sangrado
+        cardImg.color = new Color(0.08f, 0.10f, 0.14f, 1.0f);
+        cardImg.raycastTarget = true;
 
-        // Barra de acento neón superior
+        // Barra de acento neon superior
         GameObject accentGo = new GameObject("AccentBar", typeof(RectTransform), typeof(Image));
         accentGo.transform.SetParent(cardGo.transform, false);
         RectTransform rtAccent = accentGo.GetComponent<RectTransform>();
@@ -243,8 +312,9 @@ public class GameOverUI : MonoBehaviour
         rtAccent.anchoredPosition = new Vector2(0, -2);
         accentImage = accentGo.GetComponent<Image>();
         accentImage.color = victoryColor;
+        accentImage.raycastTarget = false;
 
-        // Badge superior ("MISIÓN CUMPLIDA" / "MISIÓN FALLIDA")
+        // Badge superior ("MISION CUMPLIDA" / "MISION FALLIDA")
         GameObject badgeGo = new GameObject("StatusBadge", typeof(RectTransform), typeof(TextMeshProUGUI));
         badgeGo.transform.SetParent(cardGo.transform, false);
         RectTransform rtBadge = badgeGo.GetComponent<RectTransform>();
@@ -257,10 +327,11 @@ public class GameOverUI : MonoBehaviour
         badgeText.fontStyle = FontStyles.Bold;
         badgeText.alignment = TextAlignmentOptions.Center;
         badgeText.characterSpacing = 8;
-        badgeText.text = "MISIÓN CUMPLIDA";
+        badgeText.text = "MISION CUMPLIDA";
         badgeText.color = victoryColor;
+        badgeText.raycastTarget = false;
 
-        // 3. Título ("VICTORIA" / "DERROTA")
+        // 3. Titulo ("VICTORIA" / "DERROTA")
         GameObject titleGo = new GameObject("TitleText", typeof(RectTransform), typeof(TextMeshProUGUI));
         titleGo.transform.SetParent(cardGo.transform, false);
         RectTransform rtTitle = titleGo.GetComponent<RectTransform>();
@@ -275,8 +346,9 @@ public class GameOverUI : MonoBehaviour
         titleText.characterSpacing = 6;
         titleText.text = victoryTitle;
         titleText.color = victoryColor;
+        titleText.raycastTarget = false;
 
-        // 4. Subtítulo con descripción
+        // 4. Subtitulo con descripcion
         GameObject subGo = new GameObject("SubtitleText", typeof(RectTransform), typeof(TextMeshProUGUI));
         subGo.transform.SetParent(cardGo.transform, false);
         RectTransform rtSub = subGo.GetComponent<RectTransform>();
@@ -289,8 +361,9 @@ public class GameOverUI : MonoBehaviour
         subtitleText.alignment = TextAlignmentOptions.Center;
         subtitleText.color = new Color(0.72f, 0.78f, 0.86f, 1f);
         subtitleText.text = victorySurviveSubtitle;
+        subtitleText.raycastTarget = false;
 
-        // 5. Una sola tarjeta limpia de estadística: "ENEMIGOS ELIMINADOS: 18"
+        // 5. Tarjeta de estadistica: "ENEMIGOS ELIMINADOS: 18"
         GameObject singleStatGo = new GameObject("SingleStatPill", typeof(RectTransform), typeof(Image));
         singleStatGo.transform.SetParent(cardGo.transform, false);
         RectTransform rtStatPill = singleStatGo.GetComponent<RectTransform>();
@@ -300,6 +373,7 @@ public class GameOverUI : MonoBehaviour
         rtStatPill.anchoredPosition = new Vector2(0, -170);
         Image imgPill = singleStatGo.GetComponent<Image>();
         imgPill.color = new Color(0.04f, 0.05f, 0.08f, 1.0f);
+        imgPill.raycastTarget = false;
 
         GameObject statTextGo = new GameObject("KillsValueText", typeof(RectTransform), typeof(TextMeshProUGUI));
         statTextGo.transform.SetParent(singleStatGo.transform, false);
@@ -315,10 +389,11 @@ public class GameOverUI : MonoBehaviour
         killsValueText.characterSpacing = 2;
         killsValueText.color = new Color(0.35f, 0.95f, 0.6f, 1f);
         killsValueText.text = "ENEMIGOS ELIMINADOS: 0";
+        killsValueText.raycastTarget = false;
 
-        // 6. Botones de Acción
-        btnPlayAgain = CrearBoton(cardGo.transform, "BtnPlayAgain", "JUGAR DE NUEVO", new Vector2(-120, -245), new Color(0.14f, 0.68f, 0.38f, 1f));
-        btnMainMenu = CrearBoton(cardGo.transform, "BtnMainMenu", "MENÚ PRINCIPAL", new Vector2(120, -245), new Color(0.20f, 0.24f, 0.32f, 1f));
+        // 6. Botones de Accion
+        btnPlayAgain = CrearBoton(cardGo.transform, "BtnPlayAgain", "JUGAR DE NUEVO", new Vector2(-125, -265), new Color(0.14f, 0.68f, 0.38f, 1f));
+        btnMainMenu = CrearBoton(cardGo.transform, "BtnMainMenu", "MENU PRINCIPAL", new Vector2(125, -265), new Color(0.20f, 0.24f, 0.32f, 1f));
 
         btnPlayAgain.onClick.AddListener(HandlePlayAgainClick);
         btnMainMenu.onClick.AddListener(HandleMainMenuClick);
@@ -333,11 +408,12 @@ public class GameOverUI : MonoBehaviour
         RectTransform rt = btnGo.GetComponent<RectTransform>();
         rt.anchorMin = new Vector2(0.5f, 1f);
         rt.anchorMax = new Vector2(0.5f, 1f);
-        rt.sizeDelta = new Vector2(210, 44);
+        rt.sizeDelta = new Vector2(220, 48);
         rt.anchoredPosition = pos;
 
         Image img = btnGo.GetComponent<Image>();
         img.color = baseColor;
+        img.raycastTarget = true;
 
         Button btn = btnGo.GetComponent<Button>();
         ColorBlock colors = btn.colors;
@@ -363,6 +439,7 @@ public class GameOverUI : MonoBehaviour
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
         tmp.text = label;
+        tmp.raycastTarget = false;
 
         return btn;
     }
@@ -396,7 +473,7 @@ public class GameOverUI : MonoBehaviour
     public void Show(bool isVictory)
     {
         string defaultSubtitle = isVictory ? victorySurviveSubtitle : defeatOutOfLivesSubtitle;
-        DisplayUI(isVictory, defaultSubtitle, isVictory ? 22 : 8);
+        DisplayUI(isVictory, defaultSubtitle, -1);
     }
 
     public void Show(bool isVictory, int kills, int deaths)
@@ -407,24 +484,66 @@ public class GameOverUI : MonoBehaviour
 
     private void DisplayUI(bool isVictory, string subtitle, int kills)
     {
+        EnsureEventSystemExists();
+
+        if (transform.parent != null && !transform.parent.gameObject.activeSelf)
+        {
+            transform.parent.gameObject.SetActive(true);
+        }
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+
         EnsureUIBuilt();
         isGameOverActive = true;
 
+        transform.SetAsLastSibling();
         if (rootPanel != null)
         {
+            rootPanel.transform.SetAsLastSibling();
             rootPanel.SetActive(true);
         }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        DesactivarCamarasJugador();
+        // Ocultar panel de derrota individual si estaba activo
+        if (PersonalLosePanel.Instance != null)
+        {
+            PersonalLosePanel.Instance.gameObject.SetActive(false);
+        }
+
+        // Cancelar cualquier corrutina de desconexion por muerte individual
+        PlayerHealth[] allPlayers = FindObjectsByType<PlayerHealth>(FindObjectsInactive.Include);
+        foreach (var ph in allPlayers)
+        {
+            if (ph != null) ph.CancelReturnToMenu();
+        }
+
+        OcultarHudsDelJuego();
+        DesactivarControlesJugador();
+        DetenerActividadMundo();
+
+        // Asegurar que los botones esten habilitados y con el texto correcto
+        if (btnPlayAgain != null)
+        {
+            btnPlayAgain.interactable = true;
+            var tmp = btnPlayAgain.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null) tmp.text = "JUGAR DE NUEVO";
+        }
+        if (btnMainMenu != null)
+        {
+            btnMainMenu.interactable = true;
+            var tmp = btnMainMenu.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null) tmp.text = "MENU PRINCIPAL";
+        }
 
         Color mainColor = isVictory ? victoryColor : defeatColor;
 
         if (badgeText != null)
         {
-            badgeText.text = isVictory ? "MISIÓN CUMPLIDA" : "MISIÓN FALLIDA";
+            badgeText.text = isVictory ? "MISION CUMPLIDA" : "MISION FALLIDA";
             badgeText.color = mainColor;
         }
 
@@ -446,18 +565,88 @@ public class GameOverUI : MonoBehaviour
 
         if (killsValueText != null)
         {
+            if (killsValueText.transform.parent != null && killsValueText.transform.parent.name == "SingleStatPill")
+            {
+                killsValueText.transform.parent.gameObject.SetActive(kills >= 0);
+            }
             killsValueText.color = isVictory ? new Color(0.35f, 0.95f, 0.6f, 1f) : new Color(1f, 0.45f, 0.45f, 1f);
         }
 
-        // Animación de entrada suave
-        if (animCoroutine != null) StopCoroutine(animCoroutine);
-        animCoroutine = StartCoroutine(AnimateEntry());
+        // Animacion de entrada suave y conteo de bajas
+        if (gameObject.activeInHierarchy)
+        {
+            if (animCoroutine != null) StopCoroutine(animCoroutine);
+            animCoroutine = StartCoroutine(AnimateEntry());
 
-        // Conteo suave de bajas
-        if (tickerCoroutine != null) StopCoroutine(tickerCoroutine);
-        tickerCoroutine = StartCoroutine(AnimateStatsTicker(kills));
+            if (kills >= 0)
+            {
+                if (tickerCoroutine != null) StopCoroutine(tickerCoroutine);
+                tickerCoroutine = StartCoroutine(AnimateStatsTicker(kills));
+            }
+        }
+        else
+        {
+            if (rootCanvasGroup != null) rootCanvasGroup.alpha = 1f;
+            if (kills >= 0 && killsValueText != null) killsValueText.text = $"ENEMIGOS ELIMINADOS: [ {kills} ]";
+        }
 
         OnGameOverShown?.Invoke();
+    }
+
+    private void DetenerActividadMundo()
+    {
+        EnemySpawner[] spawners = FindObjectsByType<EnemySpawner>(FindObjectsInactive.Exclude);
+        foreach (var sp in spawners)
+        {
+            if (sp != null)
+            {
+                sp.StopAllCoroutines();
+                sp.enabled = false;
+            }
+        }
+
+        EnemyCombat[] combats = FindObjectsByType<EnemyCombat>(FindObjectsInactive.Exclude);
+        foreach (var c in combats)
+        {
+            if (c != null)
+            {
+                c.enabled = false;
+                if (c.audioSource != null && c.audioSource.isPlaying)
+                {
+                    c.audioSource.Stop();
+                }
+                Animator anim = c.GetComponentInChildren<Animator>();
+                if (anim != null)
+                {
+                    anim.speed = 0f;
+                }
+            }
+        }
+
+        Ai[] ais = FindObjectsByType<Ai>(FindObjectsInactive.Exclude);
+        foreach (var ai in ais)
+        {
+            if (ai != null)
+            {
+                ai.enabled = false;
+            }
+        }
+
+        UnityEngine.AI.NavMeshAgent[] agents = FindObjectsByType<UnityEngine.AI.NavMeshAgent>(FindObjectsInactive.Exclude);
+        foreach (var agent in agents)
+        {
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
+        }
+
+        Shoot[] shoots = FindObjectsByType<Shoot>(FindObjectsInactive.Exclude);
+        foreach (var sh in shoots)
+        {
+            if (sh != null) sh.enabled = false;
+        }
     }
 
     private IEnumerator AnimateEntry()
@@ -510,6 +699,58 @@ public class GameOverUI : MonoBehaviour
         }
     }
 
+    private void OcultarHudsDelJuego()
+    {
+        SafeHide(FindFirstObjectByType<PlayerHealthUI>());
+        SafeHide(FindFirstObjectByType<AmmoUI>());
+        SafeHide(FindFirstObjectByType<TowerUi>());
+        SafeHide(FindFirstObjectByType<sesionCodeUI>());
+
+        TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Exclude);
+        foreach (var t in texts)
+        {
+            if (t != null && t.gameObject != null && t.gameObject.name.ToLower().Contains("timer") && !t.transform.IsChildOf(transform))
+            {
+                t.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private void SafeHide(MonoBehaviour mb)
+    {
+        if (mb == null) return;
+        mb.enabled = false;
+        if (mb.GetComponent<Canvas>() == null && mb.gameObject != gameObject && !transform.IsChildOf(mb.transform))
+        {
+            mb.gameObject.SetActive(false);
+        }
+    }
+
+    private void DesactivarControlesJugador()
+    {
+        DesactivarCamarasJugador();
+
+        PlayerMovementCC[] movements = FindObjectsByType<PlayerMovementCC>(FindObjectsInactive.Exclude);
+        foreach (var pm in movements)
+        {
+            if (pm != null) pm.enabled = false;
+        }
+
+        Shoot[] shoots = FindObjectsByType<Shoot>(FindObjectsInactive.Exclude);
+        foreach (var sh in shoots)
+        {
+            if (sh != null) sh.enabled = false;
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.PlayerInput[] inputs = FindObjectsByType<UnityEngine.InputSystem.PlayerInput>(FindObjectsInactive.Exclude);
+        foreach (var input in inputs)
+        {
+            if (input != null) input.DeactivateInput();
+        }
+#endif
+    }
+
     private void DesactivarCamarasJugador()
     {
         MonoBehaviour[] scripts = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
@@ -522,9 +763,43 @@ public class GameOverUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Oculta el panel y restaura el estado.
-    /// </summary>
+    public void RestaurarControlesJugador()
+    {
+        PlayerMovementCC[] movements = FindObjectsByType<PlayerMovementCC>(FindObjectsInactive.Include);
+        foreach (var pm in movements)
+        {
+            if (pm != null) pm.enabled = true;
+        }
+
+        Shoot[] shoots = FindObjectsByType<Shoot>(FindObjectsInactive.Include);
+        foreach (var sh in shoots)
+        {
+            if (sh != null) sh.enabled = true;
+        }
+
+        CameraControllerFPS[] cams = FindObjectsByType<CameraControllerFPS>(FindObjectsInactive.Include);
+        foreach (var cam in cams)
+        {
+            if (cam != null)
+            {
+                cam.enabled = true;
+                if (cam.IsOwner)
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
+            }
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.PlayerInput[] inputs = FindObjectsByType<UnityEngine.InputSystem.PlayerInput>(FindObjectsInactive.Include);
+        foreach (var input in inputs)
+        {
+            if (input != null) input.ActivateInput();
+        }
+#endif
+    }
+
     public void Hide()
     {
         isGameOverActive = false;
@@ -536,10 +811,21 @@ public class GameOverUI : MonoBehaviour
         {
             rootPanel.SetActive(false);
         }
+
+        RestaurarControlesJugador();
     }
 
     private void HandleMainMenuClick()
     {
+        Debug.Log("[GameOverUI] HandleMainMenuClick invocado.");
+
+        if (btnMainMenu != null)
+        {
+            btnMainMenu.interactable = false;
+            var tmp = btnMainMenu.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null) tmp.text = "SALIENDO...";
+        }
+
         if (OnReturnToMenuRequested != null)
         {
             OnReturnToMenuRequested.Invoke();
@@ -551,6 +837,8 @@ public class GameOverUI : MonoBehaviour
 
     private void HandlePlayAgainClick()
     {
+        Debug.Log("[GameOverUI] HandlePlayAgainClick invocado.");
+
         if (OnPlayAgainRequested != null)
         {
             OnPlayAgainRequested.Invoke();
@@ -562,6 +850,13 @@ public class GameOverUI : MonoBehaviour
 
     private void CerrarRedYVolverAlMenu()
     {
+        Debug.Log("[GameOverUI] Cerrando conexion de red y volviendo a: " + mainMenuSceneName);
+
+        if (LobbyManager.Instance != null)
+        {
+            LobbyManager.Instance.LimpiarLobbyLocal();
+        }
+
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
@@ -572,17 +867,50 @@ public class GameOverUI : MonoBehaviour
 
     private void ReiniciarPartida()
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
+        Debug.Log("[GameOverUI] ReiniciarPartida ejecutando...");
+
+        if (btnPlayAgain != null)
         {
-            NetworkManager.Singleton.SceneManager.LoadScene(
-                SceneManager.GetActiveScene().name,
-                LoadSceneMode.Single
-            );
+            btnPlayAgain.interactable = false;
+            var tmp = btnPlayAgain.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null) tmp.text = "REINICIANDO...";
         }
-        else
+
+        // Si estamos en una partida de red activa
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
+            {
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.RestartMatch();
+                    return;
+                }
+
+                if (NetworkManager.Singleton.SceneManager != null)
+                {
+                    Debug.Log("[GameOverUI] Host reiniciando escena con NetworkSceneManager: " + SceneManager.GetActiveScene().name);
+                    NetworkManager.Singleton.SceneManager.LoadScene(
+                        SceneManager.GetActiveScene().name,
+                        LoadSceneMode.Single
+                    );
+                    return;
+                }
+            }
+            else if (NetworkManager.Singleton.IsConnectedClient)
+            {
+                Debug.Log("[GameOverUI] Cliente solicitando reinicio de partida al Host...");
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.RequestRestartMatchServerRpc();
+                    return;
+                }
+            }
         }
+
+        // Modo offline / local
+        Debug.Log("[GameOverUI] Recargando escena localmente: " + SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
 #if UNITY_EDITOR

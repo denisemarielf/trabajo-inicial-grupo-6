@@ -1,8 +1,8 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using System.Collections;
-
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovementCC : NetworkBehaviour
@@ -14,6 +14,7 @@ public class PlayerMovementCC : NetworkBehaviour
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController controller;
+    private PlayerHealth playerHealth;
     private Vector2 moveInput;
     private float verticalVelocity;
     [SerializeField] private Animator animator;
@@ -21,6 +22,17 @@ public class PlayerMovementCC : NetworkBehaviour
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        playerHealth = GetComponent<PlayerHealth>();
+    }
+
+    public void ResetMovement()
+    {
+        verticalVelocity = 0f;
+        moveInput = Vector2.zero;
+        if (animator != null)
+        {
+            animator.SetFloat("speed", 0f);
+        }
     }
 
     private void Update()
@@ -28,15 +40,22 @@ public class PlayerMovementCC : NetworkBehaviour
         if (!IsOwner || EscapeMenu.IsOpen)
             return;
 
+        // Si estoy muerto, no puedo moverme ni interactuar con el escenario.
+        if (playerHealth != null && playerHealth.IsDead())
+            return;
+
         Move();
         UpdateAnimator();
         ApplyGravity();
     }
 
-    // OnNetworkSpawn eliminado de acá — esa responsabilidad ya la tiene PlayerCameraSetup.
-
     public void OnMove(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.IsDead())
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
         moveInput = context.ReadValue<Vector2>();
     }
 
@@ -44,24 +63,24 @@ public class PlayerMovementCC : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (context.performed && controller.isGrounded)
+        if (playerHealth != null && playerHealth.IsDead())
+            return;
+
+        if (context.performed && controller != null && controller.isGrounded)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-
-            // if (animator != null)
-            //   animator.SetTrigger("jump");
         }
-
-
     }
 
     private NetworkVariable<float> speedMultiplier = new NetworkVariable<float>(
-    1f,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server
-);
+        1f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     private void Move()
     {
+        if (controller == null) return;
         Vector3 movement =
             transform.right * moveInput.x +
             transform.forward * moveInput.y;
@@ -73,8 +92,10 @@ public class PlayerMovementCC : NetworkBehaviour
         if (animator == null) return;
         animator.SetFloat("speed", moveInput.magnitude);
     }
+
     private void ApplyGravity()
     {
+        if (controller == null) return;
         if (controller.isGrounded && verticalVelocity < 0)
         {
             verticalVelocity = -2f;
@@ -96,5 +117,30 @@ public class PlayerMovementCC : NetworkBehaviour
         speedMultiplier.Value = multiplier;
         yield return new WaitForSeconds(duration);
         speedMultiplier.Value = 1f;
+    }
+
+    public void OnDisconnect(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            Desconectar();
+        }
+    }
+
+    private void Desconectar()
+    {
+        if (NetworkManager.Singleton == null)
+            return;
+
+        NetworkManager.Singleton.StartCoroutine(
+            DesconectarYVolverAlMenu()
+        );
+    }
+
+    private System.Collections.IEnumerator DesconectarYVolverAlMenu()
+    {
+        NetworkManager.Singleton.Shutdown();
+        yield return new WaitForSeconds(0.2f);
+        SceneManager.LoadScene("menuPrincipal");
     }
 }

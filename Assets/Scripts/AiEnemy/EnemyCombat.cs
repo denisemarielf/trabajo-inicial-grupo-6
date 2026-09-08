@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.AI;
 using Unity.Netcode;
 using Unity.Netcode.Components; // para NetworkAnimator
@@ -6,14 +6,14 @@ using Unity.Netcode.Components; // para NetworkAnimator
 public class EnemyCombat : NetworkBehaviour
 {
     [Header("--------Ataque--------")]
-    public float attackDamage = 10f;
-    public float attackRange = 2f;
-    public float attackCooldown = 1.5f;
+    public float attackDamage = 15f;
+    public float attackRange = 2.5f;
+    public float attackCooldown = 0.8f;
     private float lastAttackTime;
     [Header("--------Referencias--------")]
     private Animator animator;
     private NavMeshAgent navMeshAgent;
-    private Ai ai; // fuente del jugador actual (vivo más cercano)
+    private Ai ai; // fuente del jugador actual (vivo mas cercano)
     private EnemyHealth enemyHealth;
     private Transform currentTarget;
     private Transform tower;
@@ -41,15 +41,25 @@ public class EnemyCombat : NetworkBehaviour
 
     void Update()
     {
-        // Toda la lógica de combate (decisión de a quién atacar, cooldown, daño)
-        // la calcula únicamente el server. El NetworkAnimator se encarga de que
-        // los clientes vean la animación igual.
+        // Toda la logica de combate (decision de a quien atacar, cooldown, dano)
+        // la calcula unicamente el server. El NetworkAnimator se encarga de que
+        // los clientes vean la animacion igual.
         if (!IsServer) return;
+
+        // Si la partida termino, no atacar ni moverse mas
+        if (GameManager.Instance != null && GameManager.Instance.IsMatchOver)
+        {
+            if (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
+            {
+                navMeshAgent.isStopped = true;
+            }
+            return;
+        }
 
         if (enemyHealth != null && enemyHealth.IsDead()) return;
         if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh) return;
 
-        // El jugador actual lo decide Ai.cs (el vivo más cercano, o null si no hay ninguno).
+        // El jugador actual lo decide Ai.cs (el vivo mas cercano, o null si no hay ninguno).
         Transform player = ai != null ? ai.CurrentPlayer : null;
         float distanceToPlayer = player != null
             ? Vector3.Distance(transform.position, player.position)
@@ -87,18 +97,18 @@ public class EnemyCombat : NetworkBehaviour
         lastAttackTime = Time.time;
         if (networkAnimator != null)
             networkAnimator.SetTrigger("attack");
-       
-        
-
     }
 
     // Llamado desde un Animation Event dentro del clip de ataque.
     public void DealDamage()
     {
         // Con NetworkAnimator, el Animation Event dispara en TODOS los clientes
-        // (porque la animación está sincronizada). Sin este check, cada cliente
-        // aplicaría daño por su cuenta.
+        // (porque la animacion esta sincronizada). Sin este check, cada cliente
+        // aplicaria dano por su cuenta.
         if (!IsServer) return;
+
+        // Si la partida ya termino a nivel global, no infligir dano
+        if (GameManager.Instance != null && GameManager.Instance.IsMatchOver) return;
 
         if (currentTarget == null) return;
 
@@ -116,8 +126,6 @@ public class EnemyCombat : NetworkBehaviour
                 playerHealth.TakeDamage(attackDamage);
                 PlayAttackSoundClientRpc();
             }
-                
-            
         }
     }
 

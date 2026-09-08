@@ -83,6 +83,11 @@ public class Shoot : NetworkBehaviour
         if (bulletScript != null)
         {
             bulletScript.setDamageAmount(damageAmount);
+
+            // NetworkObject.transform es el Player dueño de esta arma (mismo NetworkObject
+            // raiz que usa WeaponSwitcher). Esto corre YA en el server, asi que no hace
+            // falta serializar nada por RPC: accedemos directo a la referencia local.
+            bulletScript.SetShooter(NetworkObject.transform);
         }
 
         NetworkObject netObj = newBullet.GetComponent<NetworkObject>();

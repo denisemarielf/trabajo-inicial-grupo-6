@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -33,20 +33,21 @@ public class TowerHealth : NetworkBehaviour
         }
     }
 
-    
     public void TakeDamage(float amount)
     {
         if (!IsServer) return; // autoridad exclusiva del servidor
         if (isDestroyed) return;
+        if (GameManager.Instance != null && GameManager.Instance.IsMatchOver) return;
 
         currentHealth.Value -= amount;
-        Debug.Log($"Torre recibió {amount} de daño. Vida actual: {currentHealth.Value}/{maxHealth}");
+        Debug.Log($"Torre recibio {amount} de dano. Vida actual: {currentHealth.Value}/{maxHealth}");
 
         if (currentHealth.Value <= 0)
         {
             DestroyTower();
         }
     }
+
     private void DestroyTower()
     {
         isDestroyed = true;
@@ -68,8 +69,6 @@ public class TowerHealth : NetworkBehaviour
     {
         OnTowerDestroyed?.Invoke();
     }
-
-
 
     public bool IsDestroyed()
     {
